@@ -9,7 +9,7 @@ export default function Home() {
   const [animationData, setAnimationData] = useState(null);
 
   useEffect(() => {
-    fetch("/animations/dashboard.json") // Carga desde public
+    fetch("/public/animations/dashboard.json") // Carga desde public
       .then((res) => res.json())
       .then((data) => setAnimationData(data));
   }, []);

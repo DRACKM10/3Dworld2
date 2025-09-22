@@ -1,6 +1,7 @@
 import { createUser, getUserByEmail } from "../models/userModel.js";
 import bcrypt from "bcrypt";
-import validator from "validator"; // Asumimos que ya lo tienes instalado
+import jwt from "jsonwebtoken";
+import validator from "validator";
 
 /**
  * Registra un nuevo usuario.
@@ -38,7 +39,7 @@ export const registerUser = async (req, res) => {
  * Inicia sesión de un usuario.
  * @param {Object} req - Objeto de solicitud con email y password en body.
  * @param {Object} res - Objeto de respuesta.
- * @returns {Promise<void>} - Responde con un mensaje de éxito o un error.
+ * @returns {Promise<void>} - Responde con un mensaje de éxito, usuario y token o un error.
  */
 export const loginUser = async (req, res) => {
   try {
@@ -61,11 +62,10 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ error: "Contraseña incorrecta" });
     }
 
-    // Opcional: Generar un token JWT
-    // const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    // res.json({ message: "Login exitoso", user: { id: user.id, username: user.username, email: user.email }, token });
+    // Generar token JWT
+    const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
-    res.json({ message: "Login exitoso", user: { id: user.id, username: user.username, email: user.email } });
+    res.json({ message: "Login exitoso", user: { id: user.id, username: user.username, email: user.email }, token });
   } catch (err) {
     console.error("Error en loginUser:", err);
     res.status(500).json({ error: "Error interno del servidor" });

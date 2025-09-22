@@ -4,7 +4,7 @@ import { Box, Heading, Text, VStack, Button } from '@chakra-ui/react';
 import { useCart } from '../../context/CartContext';
 
 export default function CartPage() {
-  const { cart, addToCart } = useCart();
+  const { cart, addToCart, removeFromCart } = useCart();
 
   return (
     <Box p={4} maxW="1200px" mx="auto">
@@ -20,10 +20,13 @@ export default function CartPage() {
               <Button size="sm" onClick={() => addToCart(item)}>
                 Agregar otro
               </Button>
+              <Button size="sm" ml={2} onClick={() => removeFromCart(item.id)}>
+                Eliminar producto
+              </Button>
             </Box>
           ))}
         </VStack>
       )}
     </Box>
   );
-}
+} 

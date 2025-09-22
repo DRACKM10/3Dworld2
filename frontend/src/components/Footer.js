@@ -2,10 +2,15 @@ import { Box, Text, Flex } from '@chakra-ui/react';
 
 export default function Footer() {
   return (
-    <Box as="footer" p={4} bg="gray.800" color="white" mt={8}>
-      <Flex maxW="1200px" mx="auto" justify="center">
-        <Text>&copy; 2025 Mi Tienda 3D. Todos los derechos reservados.</Text>
-      </Flex>
-    </Box>
+    <footer style={{ padding: '20px', textAlign: 'center' }}>
+      <p>© 3Dworld - Todos los derechos reservados</p>
+      <p>Contacto: 3Dworld@gmail.com | Tel: +57 (312) 274-7116</p>
+      <p>Dirección:  Carrera 7 #1-13, Ginebra, colombia</p>
+      <p>
+        Síguenos: 
+        <a href="https://twitter.com/miempresa" target="_blank" rel="noopener noreferrer">Twitter</a> | 
+        <a href="https://facebook.com/miempresa" target="_blank" rel="noopener noreferrer">Facebook</a>
+      </p>
+    </footer>
   );
 }
