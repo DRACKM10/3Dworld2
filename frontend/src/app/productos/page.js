@@ -4,8 +4,8 @@ import ProductCard from '../../components/Productcard';
 export default function Products() {
   // Datos simulados (puedes conectar a una API)
   const products = [
-    { id: 1, name: 'Producto 1', price: 100, image: '../public/iamges/product1.png' },
-    { id: 2, name: 'Producto 2', price: 200, image: '/images/product2.jpg' },
+    { id: 1, name: 'Producto 1', price: 100, image: '../public/iamges/ej1.png' },
+    { id: 2, name: 'Producto 2', price: 200, image: '/images/ej1.jpg' },
   ];
 
   return (

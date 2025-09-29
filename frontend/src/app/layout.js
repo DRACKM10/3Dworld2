@@ -1,4 +1,5 @@
 // src/app/layout.js
+
 import ClientLayout from '../components/ClientLayout';
 
 export const metadata = {

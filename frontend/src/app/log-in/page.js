@@ -1,16 +1,22 @@
 "use client"; // Marcamos como Client Component porque usaremos useState y useRouter
 
 import { Box, Heading, Input, Button, FormControl, FormLabel, FormErrorMessage, Text, Link } from '@chakra-ui/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Lottie from 'lottie-react';
-import loginAnimation from '/3Dworld/frontend/public/animations/login.json';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [animationData, setAnimationData] = useState(null);
   const router = useRouter();
+
+  useEffect(() => {
+    fetch("/animations/Space.json") // Carga desde public
+      .then((res) => res.json())
+      .then((data) => setAnimationData(data));
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -25,10 +31,26 @@ export default function LoginPage() {
   };
 
   return (
-    
+    <>
+
+      {animationData && (
+        <Lottie
+          animationData={animationData}
+          loop
+          autoplay
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            zIndex: -2,
+          }}
+        />
+      )}
     
 
-    <Box p={4} maxW="400px" mx="auto" mt={10}>
+    <Box p={4} maxW="400px" mx="auto" mt={10} minHeight="100vh">
       <Heading mb={6} textAlign="center">Iniciar Sesión</Heading>
       <form onSubmit={handleSubmit}>
         <FormControl isInvalid={error !== ''} mb={4}>
@@ -67,5 +89,6 @@ export default function LoginPage() {
         </Text>
       </form>
     </Box>
+    </>
   );
 }

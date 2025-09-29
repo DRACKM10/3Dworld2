@@ -9,13 +9,13 @@ export default function Home() {
   const [animationData, setAnimationData] = useState(null);
 
   useEffect(() => {
-    fetch("/public/animations/dashboard.json") // Carga desde public
+    fetch("/animations/Space.json") // Carga desde public
       .then((res) => res.json())
       .then((data) => setAnimationData(data));
   }, []);
 
   const products = [
-    { id: 1, name: "Producto 1", price: 100, image: "/images/product1.png" },
+    { id: 1, name: "Producto 1", price: 100, image: "/images/p1.png" },
     { id: 2, name: "Producto 2", price: 200, image: "/images/product2.png" },
     { id: 3, name: "Producto 3", price: 150, image: "/images/product3.jpg" },
   ];
@@ -45,7 +45,7 @@ export default function Home() {
         position="relative"
         zIndex={1}
         minHeight="100vh"
-        bg="rgba(0, 0, 0, 0.7)"
+        bg="rgba(0, 0, 0,0)"
       >
         <Heading mb={6} color="white">
           Nuestros Productos

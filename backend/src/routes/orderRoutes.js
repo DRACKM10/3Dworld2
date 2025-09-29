@@ -1,5 +1,5 @@
 import express from "express";
-import authMiddleware from "../middleware/auth.js"; // Default import, sin llaves
+import authMiddleware from "../middleware/authenticateToken.js"; // Default import, sin llaves
 import { createOrder, getOrders } from "../controllers/orderController.js";
 
 const router = express.Router();
