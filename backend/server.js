@@ -6,15 +6,15 @@ import pool from "./src/config/db.js";
 import productRoutes from "./src/routes/productRoutes.js";
 import cartRoutes from "./src/routes/cartRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
-import orderRoutes from "./src/routes/orderRoutes.js"; // Nuevo: para manejar pedidos
+import orderRoutes from "./src/routes/orderRoutes.js";
 
 dotenv.config();
 const app = express();
 
-app.use(cors({ origin: "http://localhost:3000" }));  // Más específico para seguridad
+app.use(cors({ origin: "http://localhost:3000" }));
 app.use(express.json());
 
-// Verificar conexión a la base de datos (estilo async) – buena elección, evita bloquear el hilo principal
+// Verificar conexión DB
 const verifyConnection = async () => {
   try {
     const connection = await pool.getConnection();
@@ -27,25 +27,12 @@ const verifyConnection = async () => {
 };
 verifyConnection();
 
-// Chequeo rápido de variables env críticas (e.g., para JWT) – lección: siempre valida configs al inicio
-if (!process.env.JWT_SECRET) {
-  console.error("Error: JWT_SECRET no definido en .env – tu autenticación fallará");
-  process.exit(1);
-}
-
 // Rutas
 app.use("/api/products", productRoutes);
 app.use("/api/carts", cartRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/orders", orderRoutes); // Nuevo: integra los pedidos aquí
+app.use("/api/users", userRoutes);  // <-- Aquí están tus rutas de login/register
+app.use("/api/orders", orderRoutes);
 
-// Middleware de manejo de errores – simple pero efectivo, bien
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: "Algo salió mal en el servidor" });
-});
-
-// Ruta raíz para probar – útil para health check
 app.get("/", (req, res) => {
   res.json({ message: "API de 3Dworld backend funcionando!" });
 });

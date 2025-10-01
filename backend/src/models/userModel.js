@@ -5,11 +5,6 @@ import validator from "validator";
 /**
  * Crea un nuevo usuario en la base de datos.
  * @param {Object} user - Datos del usuario.
- * @param {string} user.username - Nombre de usuario.
- * @param {string} user.email - Email del usuario.
- * @param {string} user.password - Contraseña del usuario.
- * @returns {Promise<Object>} - Objeto con id, username, y email del usuario creado.
- * @throws {Error} - Si los datos son inválidos o el email ya existe.
  */
 export const createUser = async (user) => {
   const { username, email, password } = user;
@@ -33,7 +28,7 @@ export const createUser = async (user) => {
     );
     return { id: result.insertId, username, email };
   } catch (error) {
-    if (error.code === "ER_DUPE_ENTRY") {
+    if (error.code === "ER_DUP_ENTRY") {
       throw new Error("El email ya está registrado");
     }
     throw error;
@@ -42,9 +37,6 @@ export const createUser = async (user) => {
 
 /**
  * Busca un usuario por su email.
- * @param {string} email - Email del usuario.
- * @returns {Promise<Object|null>} - Objeto con los datos del usuario o null si no existe.
- * @throws {Error} - Si el email es inválido.
  */
 export const getUserByEmail = async (email) => {
   if (!email || !validator.isEmail(email)) {
