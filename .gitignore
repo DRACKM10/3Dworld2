@@ -1,0 +1,31 @@
+# Ignorar archivos de entorno
+.env
+backend/.env
+frontend/.env
+
+# Ignorar node_modules de backend y frontend
+backend/node_modules/
+frontend/node_modules/
+npm-debug.log*
+node_modules/
+
+# Ignorar archivos generados por el sistema
+.DS_Store
+*.log
+*.tmp
+
+# Ignorar carpetas de build o distribucion
+backend/dist/
+backend/build/
+frontend/dist/
+frontend/build/
+
+# Ignorar archivos de base de datos locales
+*.sql
+*.backup
+
+# Ignorar archivos IDE/Editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
