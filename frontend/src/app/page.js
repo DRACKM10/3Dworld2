@@ -1,5 +1,5 @@
 import { Box, SimpleGrid, Heading } from "@chakra-ui/react";
-import ProductCard from "../components/productCard";
+import ProductCard from "../components/ProductCard";
 
 export default function Home() {
   const products = [

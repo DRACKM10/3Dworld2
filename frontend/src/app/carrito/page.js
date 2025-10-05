@@ -7,7 +7,7 @@ export default function CartPage() {
   const { cart, addToCart, removeFromCart } = useCart();
 
   return (
-    <Box p={4} maxW="1200px" mx="auto">
+    <Box p={4} maxW="1200px" mx="auto" color="white">
       <Heading mb={6}>Carrito de Compras</Heading>
       {cart.length === 0 ? (
         <Text>El carrito está vacío</Text>

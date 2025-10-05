@@ -6,7 +6,7 @@ export default function Header() {
     <Box
       as="header"
       p={4}
-      bgGradient="linear(to-r, #0a012b, #0f0f0f)" // 🔹 Degradado moderno
+      bgGradient="linear(to-r, #0b2b33, #0f0f0f)" // 🔹 Degradado moderno
       color="#EDEDED"
       boxShadow="md"
     >
