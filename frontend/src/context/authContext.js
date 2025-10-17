@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
       
       if (res.ok) {
         const userData = await res.json();
-        setUser(userData);
+        setUser(userData.user); // ← CORREGIDO: userData.user
         setToken(token);
       } else {
         throw new Error('Invalid token');

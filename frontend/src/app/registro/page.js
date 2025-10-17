@@ -14,11 +14,12 @@ import {
   InputGroup,
   InputRightElement,
   IconButton,
+  useToast,
 } from "@chakra-ui/react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
-import Lottie from "lottie-react";
+import { useAuth } from "../../context/authContext";
 
 export default function RegisterPage() {
   const [username, setUsername] = useState("");
@@ -26,32 +27,64 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const [animationData, setAnimationData] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  const { register, loading } = useAuth();
   const router = useRouter();
-
-  useEffect(() => {
-    fetch("/animations/Space.json")
-      .then((res) => res.json())
-      .then((data) => setAnimationData(data));
-  }, []);
+  const toast = useToast();
 
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
 
-    if (!username) return setError("El nombre de usuario es obligatorio");
-    if (!validateEmail(email))
-      return setError("Por favor, ingresa un correo electrónico válido");
-    if (password.length < 8)
-      return setError("La contraseña debe tener al menos 8 caracteres");
-    if (password !== confirmPassword)
-      return setError("Las contraseñas no coinciden");
+    // Validaciones
+    if (!username) {
+      setError("El nombre de usuario es obligatorio");
+      return;
+    }
+    if (!validateEmail(email)) {
+      setError("Por favor, ingresa un correo electrónico válido");
+      return;
+    }
+    if (password.length < 6) {
+      setError("La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Las contraseñas no coinciden");
+      return;
+    }
 
-    // Simula registro y redirige al login
-    router.push("/login");
+    const result = await register({
+      username: username.trim(),
+      email: email.trim(),
+      password: password,
+    });
+
+    if (result.success) {
+      toast({
+        title: "Registro exitoso",
+        description: "Tu cuenta ha sido creada correctamente",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+      
+      // Redirigir al home después del registro
+      router.push("/");
+    } else {
+      setError(result.error);
+      toast({
+        title: "Error en registro",
+        description: result.error,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
   };
 
   return (
@@ -95,6 +128,7 @@ export default function RegisterPage() {
                 boxShadow: "0 0 10px #7D00FF",
               }}
               required
+              disabled={loading}
             />
           </FormControl>
 
@@ -113,6 +147,7 @@ export default function RegisterPage() {
                 boxShadow: "0 0 10px #7D00FF",
               }}
               required
+              disabled={loading}
             />
           </FormControl>
 
@@ -132,6 +167,7 @@ export default function RegisterPage() {
                   boxShadow: "0 0 10px #7D00FF",
                 }}
                 required
+                disabled={loading}
               />
               <InputRightElement width="3rem">
                 <IconButton
@@ -141,6 +177,7 @@ export default function RegisterPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   bg="transparent"
                   color="#7D00FF"
+                  disabled={loading}
                 />
               </InputRightElement>
             </InputGroup>
@@ -162,17 +199,17 @@ export default function RegisterPage() {
                   boxShadow: "0 0 10px #7D00FF",
                 }}
                 required
+                disabled={loading}
               />
               <InputRightElement width="3rem">
                 <IconButton
                   aria-label="Mostrar u ocultar confirmación"
                   icon={showConfirmPassword ? <ViewOffIcon /> : <ViewIcon />}
                   size="sm"
-                  onClick={() =>
-                    setShowConfirmPassword(!showConfirmPassword)
-                  }
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   bg="transparent"
                   color="#7D00FF"
+                  disabled={loading}
                 />
               </InputRightElement>
             </InputGroup>
@@ -190,6 +227,8 @@ export default function RegisterPage() {
             }}
             transition="all 0.2s ease-in-out"
             mb={4}
+            isLoading={loading}
+            loadingText="Registrando..."
           >
             Registrarse
           </Button>

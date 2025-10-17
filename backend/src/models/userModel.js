@@ -7,9 +7,9 @@ import validator from "validator";
  * @param {Object} user - Datos del usuario.
  */
 export const createUser = async (user) => {
-  const { username, email, password = "user" } = user; // Default  si no pasado
+  const { username, email, password } = user;
 
-  console.log('createUser llamado con:', { username, email, password: '*',  });
+  console.log('createUser llamado con:', { username, email, password: '*'.repeat(password?.length || 0) });
 
   if (!username || typeof username !== "string" || username.trim().length < 3) {
     throw new Error("username es requerido y debe tener al menos 3 caracteres");
@@ -25,16 +25,25 @@ export const createUser = async (user) => {
   console.log('Password hasheado en model');
 
   try {
-    // Agrega  al INSERT si tu tabla lo tiene; sino quita ,  y ?
+    // INSERT CORREGIDO - solo 3 campos (quitamos role)
     const [result] = await pool.query(
-      "INSERT INTO users (username, email, password, ) VALUES (?, ?, ?, ?)",
-      [username.trim(), email.trim().toLowerCase(), hashedPassword, ] // Trim y lowercase email
+      "INSERT INTO users (username, email, password) VALUES (?, ?, ?)", // ← 3 campos, sin coma extra
+      [username.trim(), email.trim().toLowerCase(), hashedPassword] // ← 3 valores
     );
+    
+    console.log('✅ Usuario insertado con ID:', result.insertId);
     return { id: result.insertId, username, email };
+    
   } catch (error) {
-    console.error('Error en createUser query:', error.message, error.code);
+    console.error('❌ Error en createUser query:', error.message, error.code);
     if (error.code === "ER_DUP_ENTRY") {
-      throw new Error("El email ya está registrado");
+      // Determinar si es duplicado de email o username
+      if (error.message.includes('email')) {
+        throw new Error("El email ya está registrado");
+      } else if (error.message.includes('username')) {
+        throw new Error("El nombre de usuario ya existe");
+      }
+      throw new Error("El usuario o email ya existe");
     }
     throw error;
   }
@@ -50,14 +59,15 @@ export const getUserByEmail = async (email) => {
 
   try {
     const [rows] = await pool.query(
-      "SELECT id, username, email, password FROM users WHERE LOWER(email) = LOWER(?)", // Case-insensitive
+      "SELECT id, username, email, password FROM users WHERE LOWER(email) = LOWER(?)",
       [email.trim()]
     );
+    
     console.log('getUserByEmail rows:', rows.length > 0 ? 'Encontrado' : 'No encontrado');
     return rows[0] || null;
+    
   } catch (error) {
     console.error('Error en getUserByEmail:', error.message);
     throw new Error(`Error al obtener usuario: ${error.message}`);
-
   }
 };
