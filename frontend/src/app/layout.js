@@ -1,6 +1,7 @@
 // src/app/layout.js
 import { Providers } from './providers';
 import ClientLayout from '../components/ClientLayout';
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 export const metadata = {
   title: 'Mi Tienda 3D',
@@ -17,9 +18,13 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
-        <Providers> {}
-          <ClientLayout>{children}</ClientLayout>
-        </Providers>
+        <GoogleOAuthProvider 
+          clientId="249291398337-5a8qjno84eobru6m1hg7u553cjn0bjkr.apps.googleusercontent.com"
+        >
+          <Providers>
+            <ClientLayout>{children}</ClientLayout>
+          </Providers>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

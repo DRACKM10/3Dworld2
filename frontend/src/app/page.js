@@ -1,14 +1,22 @@
-import { Box, SimpleGrid, Heading } from "@chakra-ui/react";
+"use client";
+import {  useState } from 'react';
+import {Flex, Button, Box, SimpleGrid, Heading } from "@chakra-ui/react";
 import ProductCard from "../components/ProductCard";
+import ProductList from "../components/ProductList"
+import ProductFormModal from "../components/ProductFormModal"
+
 
 export default function Home() {
-  const products = [
-    { id: 1, name: "Producto 1", price: 100, image: "/images/ej1.jpg" },
-    { id: 2, name: "Producto 2", price: 200, image: "/images/ej2.jpg" },
-    { id: 3, name: "Producto 3", price: 150, image: "/images/ej3.jpg" },
-  ];
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [products, setProducts] = useState([])
 
-  return (
+    const handleAddProduct = (newProduct) => {
+          setProducts((prev) => [...prev, newProduct]);
+
+    };
+
+
+    return (
     <Box
       p={4}
       maxW="1200px"
@@ -18,19 +26,19 @@ export default function Home() {
       minHeight="100vh"
       bgGradient="linear(to-b, #0F0F0F, #2E2E2E)"
     >
-      <Heading
-        mb={6}
-        color="white"
-        textAlign="center"
-        textShadow="0 0 10px rgba(0, 0, 0, 0.8)"
-      >
-        Nuestros Productos
-      </Heading>
-      <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </SimpleGrid>
-    </Box>
+     
+     <Flex justify="space-between" align="center" mb={6}>
+          <Heading color="white">Nuestros Productos</Heading>
+          <Button colorScheme="teal" onClick={() => setIsModalOpen(true)}>
+            Agregar Producto
+          </Button>
+        </Flex>
+        <ProductFormModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onAddProduct={handleAddProduct}
+        />
+        <ProductList products={products} />
+      </Box>
   );
 }

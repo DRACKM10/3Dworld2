@@ -18,7 +18,7 @@ const theme = extendTheme({
     },
   },
   fonts: {
-    heading: `'Bree Serif', serif`,
+    heading: `'Lexend Dec', sans-serif`,
     body: `'Lexend Deca', sans-serif`,
   },
   components: {

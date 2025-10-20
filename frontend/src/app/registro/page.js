@@ -29,7 +29,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const { register, loading } = useAuth();
   const router = useRouter();
   const toast = useToast();
@@ -72,7 +72,7 @@ export default function RegisterPage() {
         duration: 3000,
         isClosable: true,
       });
-      
+
       // Redirigir al home después del registro
       router.push("/");
     } else {
@@ -114,6 +114,7 @@ export default function RegisterPage() {
         </Heading>
 
         <form onSubmit={handleSubmit}>
+          {/* Nombre de usuario */}
           <FormControl isInvalid={error !== ""} mb={4}>
             <FormLabel>Nombre de Usuario</FormLabel>
             <Input
@@ -132,6 +133,7 @@ export default function RegisterPage() {
             />
           </FormControl>
 
+          {/* Correo electrónico */}
           <FormControl isInvalid={error !== ""} mb={4}>
             <FormLabel>Correo Electrónico</FormLabel>
             <Input
@@ -151,6 +153,7 @@ export default function RegisterPage() {
             />
           </FormControl>
 
+          {/* Contraseña */}
           <FormControl isInvalid={error !== ""} mb={4}>
             <FormLabel>Contraseña</FormLabel>
             <InputGroup>
@@ -183,6 +186,7 @@ export default function RegisterPage() {
             </InputGroup>
           </FormControl>
 
+          {/* Confirmar contraseña */}
           <FormControl isInvalid={error !== ""} mb={6}>
             <FormLabel>Confirmar Contraseña</FormLabel>
             <InputGroup>
@@ -206,7 +210,9 @@ export default function RegisterPage() {
                   aria-label="Mostrar u ocultar confirmación"
                   icon={showConfirmPassword ? <ViewOffIcon /> : <ViewIcon />}
                   size="sm"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  onClick={() =>
+                    setShowConfirmPassword(!showConfirmPassword)
+                  }
                   bg="transparent"
                   color="#7D00FF"
                   disabled={loading}
@@ -216,6 +222,7 @@ export default function RegisterPage() {
             <FormErrorMessage>{error}</FormErrorMessage>
           </FormControl>
 
+          {/* Botón Registrarse */}
           <Button
             type="submit"
             width="full"
@@ -233,6 +240,7 @@ export default function RegisterPage() {
             Registrarse
           </Button>
 
+          {/* Enlace de inicio de sesión */}
           <Text textAlign="center">
             ¿Ya tienes cuenta?{" "}
             <Link
