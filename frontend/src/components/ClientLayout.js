@@ -1,18 +1,16 @@
-'use client';
-import { ChakraProvider } from "@chakra-ui/react";
+// components/ClientLayout.js
+"use client";
+
 import { CartProvider } from '../context/CartContext';
-import theme from '../styles/theme';
 import Header from './header';
-import Footer from './Footer';
 
 export default function ClientLayout({ children }) {
   return (
-    <ChakraProvider theme={theme}>
-      <CartProvider>
-        <Header />
-        <main>{children}</main>
-        <Footer />
-      </CartProvider>
-    </ChakraProvider>
+    <CartProvider>
+      <Header />
+      <main>
+        {children}
+      </main>
+    </CartProvider>
   );
 }

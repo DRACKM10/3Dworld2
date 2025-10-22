@@ -1,72 +1,48 @@
 "use client";
+import { useCart } from '../context/CartContext';
+import { Box, Image, Button, Text, VStack } from '@chakra-ui/react';
 
-import { Box, Text, Button } from '@chakra-ui/react';
-import Link from 'next/link';
-import Image from 'next/image';
+export default function ProductCard({ product }) {
+  const { addToCart } = useCart();
 
-export default function ProductCard({ product, onClick }) {
-  const addToCart = (product) => {
-    console.log('Agregar al carrito:', product);
-    alert(`"${product.name}" agregado al carrito!`);
+  const handleAddToCart = () => {
+    addToCart(product);
   };
 
-  // Usar product.images como array y tomar la primera imagen si existe
-  const imageSrc = Array.isArray(product.images) && product.images.length > 0
-    ? product.images[0]
-    : product.image || '/images/default.jpg';
-
   return (
-    <Box
-      borderWidth="1px"
-      borderRadius="lg"
-      borderColor="#7D00FF"
+    <Box 
+      borderWidth="1px" 
+      borderRadius="lg" 
+      overflow="hidden" 
       p={4}
-      maxW="sm"
-      bgGradient="linear(to-b, #0b2b33, #0f0f0f)"
+      bg="white"
       boxShadow="md"
-      zIndex={1}
-      _hover={{
-        transform: "translateY(-5px)",
-        transition: "transform 0.2s ease-in-out"
-      }}
-      onClick={onClick} // Opcional: permite redirección desde el contenedor
+      _hover={{ transform: 'scale(1.02)', transition: 'transform 0.2s' }}
     >
-      <Link href={`/productos/${product.id}`}>
-        <Box position="relative" width="100%" height="200px" overflow="hidden" borderRadius="8px">
-          <Image
-            src={imageSrc}
-            alt={product.name || "Producto"}
-            fill
-            style={{ objectFit: 'cover', borderRadius: '8px' }}
-            priority={false}
-            onError={(e) => {
-              e.target.src = '/images/default.jpg';
-              console.error('Imagen no encontrada en ProductCard:', imageSrc);
-            }}
-          />
-        </Box>
-      </Link>
-      
-      <Text color="white" fontWeight="bold" mt={2} fontSize="lg">
-        {product.name || "Sin nombre"}
-      </Text>
-      <Text color="white" fontSize="md" mb={3}>${product.price || 0}</Text>
-      
-      <Button 
-        colorScheme="purple" 
-        variant="solid" 
+      <Image 
+        src={product.image} 
+        alt={product.name}
+        height="200px"
         width="100%"
-        onClick={(e) => {
-          e.stopPropagation(); // Evita que el onClick del Box se dispare
-          addToCart(product);
-        }}
-        _hover={{
-          bg: "purple.600",
-          transform: "scale(1.05)"
-        }}
-      >
-        Agregar al carrito
-      </Button>
+        objectFit="cover"
+        mb={4}
+        borderRadius="md"
+      />
+      
+      <VStack align="start" spacing={2}>
+        <Text fontWeight="bold" fontSize="lg" noOfLines={1}>{product.name}</Text>
+        <Text color="gray.600" fontSize="sm" noOfLines={2}>{product.description}</Text>
+        <Text fontWeight="bold" color="blue.600" fontSize="xl">${product.price}</Text>
+        
+        <Button 
+          colorScheme="teal" 
+          width="100%"
+          onClick={handleAddToCart}
+          size="lg"
+        >
+          🛒 Agregar al Carrito
+        </Button>
+      </VStack>
     </Box>
   );
 }

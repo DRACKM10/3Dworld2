@@ -17,21 +17,74 @@ import {
 } from "@chakra-ui/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import CartIndicator from "./CartIndicator";
 
 export default function Header() {
   const [usuario, setUsuario] = useState(null);
+  const [userData, setUserData] = useState(null);
   const toast = useToast();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("usuario");
-    if (storedUser) {
-      setUsuario(storedUser);
-    }
+    const loadCurrentUser = () => {
+      try {
+        // 1. Primero intentar cargar con el nuevo sistema (currentUser)
+        const userKey = localStorage.getItem("currentUser");
+        if (userKey) {
+          const storedUserData = localStorage.getItem(userKey);
+          if (storedUserData) {
+            const user = JSON.parse(storedUserData);
+            setUsuario(user.name);
+            setUserData(user);
+            console.log("👤 Usuario cargado (nuevo sistema):", user.name);
+            return;
+          }
+        }
+        
+        // 2. Fallback al sistema antiguo (solo nombre)
+        const storedUserName = localStorage.getItem("usuario");
+        if (storedUserName) {
+          setUsuario(storedUserName);
+          console.log("👤 Usuario cargado (sistema antiguo):", storedUserName);
+        }
+      } catch (error) {
+        console.error("Error loading user:", error);
+      }
+    };
+
+    loadCurrentUser();
+
+    // Escuchar cambios en localStorage
+    const handleStorageChange = () => {
+      loadCurrentUser();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Polling para detectar cambios (útil cuando se cambia de pestaña)
+    const interval = setInterval(loadCurrentUser, 1000);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
   }, []);
 
   const handleLogout = () => {
+    // Limpiar ambos sistemas
+    localStorage.removeItem("currentUser");
     localStorage.removeItem("usuario");
+    localStorage.removeItem("token");
+    
+    // Limpiar todos los datos de usuario del localStorage
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('user_')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
     setUsuario(null);
+    setUserData(null);
+    
     toast({
       title: "Sesión cerrada",
       description: "Has cerrado sesión correctamente",
@@ -39,6 +92,21 @@ export default function Header() {
       duration: 2500,
       isClosable: true,
     });
+
+    // Recargar la página para limpiar estados
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 500);
+  };
+
+  const getAvatarSrc = () => {
+    if (userData?.profilePic) {
+      return userData.profilePic;
+    }
+    if (usuario) {
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario)}&background=7D00FF&color=fff`;
+    }
+    return "";
   };
 
   return (
@@ -48,6 +116,9 @@ export default function Header() {
       bgGradient="linear(to-r, #0b2b33, #0f0f0f)"
       color="#EDEDED"
       boxShadow="md"
+      position="sticky"
+      top={0}
+      zIndex={1000}
     >
       <Flex
         maxW="1200px"
@@ -101,20 +172,8 @@ export default function Header() {
             </Button>
           </Link>
 
-          <Link href="/carrito" style={{ textDecoration: "none" }}>
-            <Button
-              variant="outline"
-              color="#EDEDED"
-              borderColor="#7D00FF"
-              _hover={{
-                bgGradient: "linear(to-r, #7D00FF, #9B4DFF)",
-                transform: "scale(1.05)",
-              }}
-              transition="all 0.2s ease-in-out"
-            >
-              Carrito
-            </Button>
-          </Link>
+          {/* 🔹 CartIndicator */}
+          <CartIndicator />
 
           {/* 🔹 Si hay usuario, mostrar avatar con menú */}
           {usuario ? (
@@ -122,9 +181,7 @@ export default function Header() {
               <PopoverTrigger>
                 <Avatar
                   name={usuario}
-                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                    usuario
-                  )}&background=7D00FF&color=fff`}
+                  src={getAvatarSrc()}
                   size="sm"
                   cursor="pointer"
                   border="2px solid #9B4DFF"
@@ -142,8 +199,33 @@ export default function Header() {
                 w="180px"
               >
                 <PopoverArrow bg="#7D00FF" />
+                <PopoverCloseButton />
                 <PopoverBody display="flex" flexDirection="column" gap={2} p={3}>
-                  <Link href="/perfil">
+                  {/* Información del usuario - SIN USAR COMPONENTE TEXT */}
+                  <Box mb={2} textAlign="center">
+                    <Box 
+                      as="span" 
+                      fontSize="sm" 
+                      fontWeight="bold" 
+                      display="block"
+                      noOfLines={1}
+                    >
+                      {usuario}
+                    </Box>
+                    {userData?.email && (
+                      <Box 
+                        as="span" 
+                        fontSize="xs" 
+                        color="gray.400" 
+                        display="block"
+                        noOfLines={1}
+                      >
+                        {userData.email}
+                      </Box>
+                    )}
+                  </Box>
+                  
+                  <Link href="/perfil" style={{ width: '100%' }}>
                     <Button
                       w="full"
                       size="sm"
@@ -157,6 +239,7 @@ export default function Header() {
                       Ver perfil
                     </Button>
                   </Link>
+                  
                   <Button
                     w="full"
                     size="sm"

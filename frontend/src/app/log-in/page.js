@@ -89,14 +89,13 @@ export default function LoginPage() {
 
       console.log("🚀 Enviando token al backend...");
       
-      // FORMATO EXACTO QUE ESPERA EL BACKEND
       const res = await fetch("http://localhost:8000/api/users/google", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ 
-          token: token  // ← ESTE ES EL CAMPO CORRECTO
+          token: token
         }),
       });
 
@@ -119,15 +118,42 @@ export default function LoginPage() {
       console.log("✅ Datos recibidos del backend:", data);
 
       if (data.success) {
-        // Guardar token y usuario
+        // 🔥 **CORRECCIÓN PRINCIPAL: Guardar usuario de forma única**
+        if (data.user) {
+          const user = data.user;
+          const userKey = `user_${user.id || user.email}`; // Clave única por usuario
+          const userName = user.username || user.name || user.email || "Usuario";
+          
+          // Guardar información del usuario específico
+          const userProfile = {
+            id: user.id || user.email,
+            name: userName,
+            username: user.username || user.email.split('@')[0],
+            email: user.email,
+            description: user.description || "¡Bienvenido a mi perfil! Estoy emocionado de ser parte de esta comunidad.",
+            birthdate: user.birthdate || "",
+            joinedDate: new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }),
+            following: user.following || 0,
+            followers: user.followers || 0,
+            profilePic: user.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=7D00FF&color=fff&size=128`,
+            banner: user.banner || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=0b2b33&color=7D00FF&size=1200&bold=true`
+          };
+
+          // Guardar con clave única
+          localStorage.setItem("currentUser", userKey);
+          localStorage.setItem(userKey, JSON.stringify(userProfile));
+          
+          // También guardar el nombre para compatibilidad con tu header actual
+          localStorage.setItem("usuario", userName);
+          
+          console.log("👤 Usuario guardado con clave:", userKey);
+          console.log("📝 Datos del usuario:", userProfile);
+        }
+
+        // Guardar token
         if (data.token) {
           localStorage.setItem("token", data.token);
-          console.log("🔐 Token JWT guardado:", data.token.substring(0, 50) + "...");
-        }
-        if (data.user) {
-          const userName = data.user.username || data.user.name || data.user.email || "Usuario";
-          localStorage.setItem("usuario", userName);
-          console.log("👤 Usuario guardado:", userName);
+          console.log("🔐 Token JWT guardado");
         }
 
         toast({
@@ -152,7 +178,6 @@ export default function LoginPage() {
       
       let errorMessage = err.message;
       
-      // Mensajes más específicos
       if (err.message.includes("400")) {
         errorMessage = "Token de Google inválido o expirado";
       } else if (err.message.includes("Error con Google Login")) {

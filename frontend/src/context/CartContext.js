@@ -2,137 +2,146 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 
-const CartContext = createContext(null);
+const CartContext = createContext();
 
 export function CartProvider({ children }) {
   const [cart, setCart] = useState([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Función para obtener el token guardado en localStorage
-  const getToken = () => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("token");
-    }
-    return null;
-  };
-
+  // Cargar carrito desde localStorage al iniciar
   useEffect(() => {
-    const fetchCart = async () => {
-      try {
-        const token = getToken();
-        if (!token) {
-          console.warn("No token found, cannot fetch cart");
-          return;
-        }
-        const response = await fetch("http://localhost:8000/api/carts", {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
-        });
-        if (!response.ok) throw new Error("Error fetching cart");
-        const data = await response.json();
-        setCart(data);
-      } catch (error) {
-        console.error("Error fetching cart:", error);
-      }
-    };
-    fetchCart();
+    loadCartFromLocalStorage();
+    checkAuthentication();
   }, []);
 
-  const addToCart = async (item) => {
-    try {
-      const token = getToken();
-      if (!token) {
-        console.warn("No token found, cannot add to cart");
-        return;
-      }
-      const response = await fetch("http://localhost:8000/api/carts", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({ productId: item.id, quantity: 1 }),
-      });
-      if (!response.ok) throw new Error("Error adding to cart");
-      const updatedItem = await response.json();
-      setCart((prevCart) =>
-        prevCart.some((i) => i.id === updatedItem.id)
-          ? prevCart.map((i) => (i.id === updatedItem.id ? updatedItem : i))
-          : [...prevCart, updatedItem]
-      );
-    } catch (error) {
-      console.error("Error adding to cart:", error);
+  const checkAuthentication = () => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      setIsAuthenticated(!!token);
     }
   };
 
-  const removeFromCart = async (itemId) => {
-    try {
-      const token = getToken();
-      if (!token) {
-        console.warn("No token found, cannot remove from cart");
-        return;
+  const loadCartFromLocalStorage = () => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedCart = localStorage.getItem("cart");
+        if (savedCart) {
+          setCart(JSON.parse(savedCart));
+        }
+      } catch (error) {
+        console.error("Error loading cart from localStorage:", error);
       }
-      const response = await fetch(`http://localhost:8000/api/carts/${itemId}`, {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) throw new Error("Error removing from cart");
-      setCart((prevCart) => prevCart.filter((item) => item.id !== itemId));
-    } catch (error) {
-      console.error("Error removing from cart:", error);
     }
   };
 
-  // Función para actualizar cantidad (opcional pero útil)
-  const updateQuantity = async (itemId, newQuantity) => {
-    try {
-      const token = getToken();
-      if (!token) {
-        console.warn("No token found, cannot update quantity");
-        return;
+  const saveCartToLocalStorage = (cartData) => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("cart", JSON.stringify(cartData));
+      } catch (error) {
+        console.error("Error saving cart to localStorage:", error);
       }
-      const response = await fetch(`http://localhost:8000/api/carts/${itemId}`, {
-        method: "PUT",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({ quantity: newQuantity }),
-      });
-      if (!response.ok) throw new Error("Error updating quantity");
-      const updatedItem = await response.json();
-      setCart((prevCart) =>
-        prevCart.map((item) => (item.id === itemId ? updatedItem : item))
-      );
-    } catch (error) {
-      console.error("Error updating quantity:", error);
     }
   };
 
-  // Función para limpiar el carrito
-  const clearCart = async () => {
+  // Sincronizar carrito local con BD cuando el usuario se autentica
+  const syncCartWithBackend = async () => {
+    if (!isAuthenticated) return;
+
     try {
-      const token = getToken();
-      if (!token) {
-        console.warn("No token found, cannot clear cart");
-        return;
+      const token = localStorage.getItem("token");
+      
+      // Para cada item en el carrito local, agregarlo al carrito del backend
+      for (const item of cart) {
+        await fetch("http://localhost:8000/api/carts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            productId: item.productId,
+            quantity: item.quantity,
+          }),
+        });
       }
-      const response = await fetch("http://localhost:8000/api/carts/clear", {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) throw new Error("Error clearing cart");
+
+      // Limpiar carrito local después de sincronizar
       setCart([]);
+      localStorage.removeItem("cart");
+
+      console.log("Carrito sincronizado con el backend");
     } catch (error) {
-      console.error("Error clearing cart:", error);
+      console.error("Error sincronizando carrito:", error);
     }
   };
 
-  // Calcular total del carrito
+  // Agregar producto al carrito
+  const addToCart = (product) => {
+    setCart((prevCart) => {
+      const existingItem = prevCart.find(item => item.productId === product.id);
+      
+      let newCart;
+      if (existingItem) {
+        // Incrementar cantidad si ya existe
+        newCart = prevCart.map(item =>
+          item.productId === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      } else {
+        // Agregar nuevo item
+        const newItem = {
+          id: `product_${product.id}_${Date.now()}`, // ID único
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          quantity: 1,
+          addedAt: new Date().toISOString()
+        };
+        newCart = [...prevCart, newItem];
+      }
+
+      saveCartToLocalStorage(newCart);
+      return newCart;
+    });
+  };
+
+  // Eliminar producto del carrito
+  const removeFromCart = (itemId) => {
+    setCart((prevCart) => {
+      const newCart = prevCart.filter(item => item.id !== itemId);
+      saveCartToLocalStorage(newCart);
+      return newCart;
+    });
+  };
+
+  // Actualizar cantidad
+  const updateQuantity = (itemId, newQuantity) => {
+    if (newQuantity <= 0) {
+      removeFromCart(itemId);
+      return;
+    }
+
+    setCart((prevCart) => {
+      const newCart = prevCart.map(item =>
+        item.id === itemId ? { ...item, quantity: newQuantity } : item
+      );
+      saveCartToLocalStorage(newCart);
+      return newCart;
+    });
+  };
+
+  // Limpiar carrito
+  const clearCart = () => {
+    setCart([]);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("cart");
+    }
+  };
+
+  // Calcular total
   const getCartTotal = () => {
     return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
@@ -149,7 +158,9 @@ export function CartProvider({ children }) {
     updateQuantity,
     clearCart,
     getCartTotal,
-    getCartItemsCount
+    getCartItemsCount,
+    isAuthenticated,
+    syncCartWithBackend
   };
 
   return (
@@ -161,6 +172,8 @@ export function CartProvider({ children }) {
 
 export const useCart = () => {
   const context = useContext(CartContext);
-  if (context === null) throw new Error("useCart debe ser usado dentro de CartProvider");
+  if (!context) {
+    throw new Error("useCart debe ser usado dentro de CartProvider");
+  }
   return context;
 };

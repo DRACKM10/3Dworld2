@@ -20,38 +20,73 @@ import {
   Input,
   Textarea,
   Image,
+  useDisclosure,
+  HStack,
+  VStack,
+  Spinner,
+  useToast
 } from "@chakra-ui/react";
-import { useDisclosure } from "@chakra-ui/react";
 
 export default function Perfil() {
   const [user, setUser] = useState(null);
   const [editUser, setEditUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const toast = useToast();
 
   useEffect(() => {
-    // 🔹 Crear usuario de prueba si no existe
-    let storedUser = localStorage.getItem("user");
-    
-    if (!storedUser) {
-      const defaultUser = {
-        name: "Pancito",
-        username: "pancito3d360",
-        description: "Diseñador 3D apasionado por la impresión 3D y el modelado digital. ¡Creando el futuro una capa a la vez!",
-        birthdate: "1990-05-15",
-        joinedDate: "October 2025",
-        following: 3,
-        followers: 1,
-        profilePic: `https://ui-avatars.com/api/?name=Pancito&background=7D00FF&color=fff&size=128`,
-        banner: `https://ui-avatars.com/api/?name=Pancito3D&background=0b2b33&color=7D00FF&size=1200&bold=true`
-      };
-      localStorage.setItem("user", JSON.stringify(defaultUser));
-      storedUser = JSON.stringify(defaultUser);
-    }
+    const loadUserData = () => {
+      try {
+        // 1. Obtener la clave del usuario actual
+        const userKey = localStorage.getItem("currentUser");
+        
+        if (!userKey) {
+          // Si no hay usuario logueado, redirigir al login
+          window.location.href = '/log-in';
+          return;
+        }
 
-    const parsedUser = JSON.parse(storedUser);
-    setUser(parsedUser);
-    setEditUser(parsedUser);
-  }, []);
+        // 2. Cargar datos del usuario específico
+        let storedUser = localStorage.getItem(userKey);
+        
+        if (!storedUser) {
+          // Si no existe, crear usuario por defecto para este usuario
+          const userEmail = userKey.replace('user_', '');
+          const defaultUser = {
+            id: userKey,
+            name: userEmail.split('@')[0], // Usar parte del email como nombre
+            username: userEmail.split('@')[0],
+            email: userEmail,
+            description: "¡Bienvenido a mi perfil! Estoy emocionado de ser parte de esta comunidad.",
+            birthdate: "",
+            joinedDate: new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }),
+            following: 0,
+            followers: 0,
+            profilePic: `https://ui-avatars.com/api/?name=${encodeURIComponent(userEmail.split('@')[0])}&background=7D00FF&color=fff&size=128`,
+            banner: `https://ui-avatars.com/api/?name=${encodeURIComponent(userEmail.split('@')[0])}&background=0b2b33&color=7D00FF&size=1200&bold=true`
+          };
+          localStorage.setItem(userKey, JSON.stringify(defaultUser));
+          storedUser = JSON.stringify(defaultUser);
+        }
+
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        setEditUser(parsedUser);
+      } catch (error) {
+        console.error("Error loading user:", error);
+        toast({
+          title: "Error",
+          description: "No se pudo cargar la información del usuario",
+          status: "error",
+          duration: 3000,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, [toast]);
 
   const handleChange = (e) => {
     setEditUser({ ...editUser, [e.target.name]: e.target.value });
@@ -69,187 +104,279 @@ export default function Perfil() {
   };
 
   const saveUser = () => {
-    localStorage.setItem("user", JSON.stringify(editUser));
-    setUser(editUser);
+    try {
+      const userKey = localStorage.getItem("currentUser");
+      if (!userKey) {
+        toast({
+          title: "Error",
+          description: "No se encontró el usuario actual",
+          status: "error",
+          duration: 3000,
+        });
+        return;
+      }
+
+      localStorage.setItem(userKey, JSON.stringify(editUser));
+      setUser(editUser);
+      onClose();
+      
+      toast({
+        title: "Perfil actualizado",
+        description: "Tus cambios se guardaron correctamente",
+        status: "success",
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error("Error saving user:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron guardar los cambios",
+        status: "error",
+        duration: 3000,
+      });
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditUser(user);
     onClose();
   };
 
-  if (!user) return <Text color="white">Cargando...</Text>;
+  const handleLogout = () => {
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("token");
+    window.location.href = '/';
+  };
+
+  if (loading) {
+    return (
+      <Box bg="#121212" minH="100vh" display="flex" alignItems="center" justifyContent="center">
+        <Spinner size="xl" color="#7D00FF" />
+      </Box>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Box bg="#121212" minH="100vh" display="flex" alignItems="center" justifyContent="center">
+        <VStack spacing={4}>
+          <Text color="white">No se pudo cargar el perfil</Text>
+          <Button 
+            colorScheme="purple"
+            onClick={() => window.location.href = '/log-in'}
+          >
+            Ir al Login
+          </Button>
+        </VStack>
+      </Box>
+    );
+  }
 
   return (
-    <Box 
-      bg="#121212" 
-      color="white" 
-      minH="100vh" 
-      w="100vw"
-      maxW="none"
-    >
-      {/* 🔹 TODO EN UN SOLO CONTAINER CENTRADO */}
+    <Box bg="#121212" minH="100vh" py={8}>
+      {/* Container Principal */}
       <Box 
         maxW="1200px" 
         mx="auto" 
-        w="100%" 
         px={{ base: 4, md: 6 }}
-        pt={4}
         border="1px solid #9B4DFF"
         borderRadius="16px"
         bg="black"
-        p="6"
-        marginTop="30px"
-        marginBottom="30px"
-
+        overflow="hidden"
       >
         {/* Banner */}
         <Box 
           position="relative" 
-          height={{ base: "200px", md: "260px" }} 
+          height={{ base: "140px", md: "200px", lg: "240px" }} 
+          width="100%"
           overflow="hidden" 
-          borderRadius="lg"
-          w="100%"
-          mb={{ base: 4, md: 6 }}
         >
           <Image 
             src={user.banner} 
             alt="Banner" 
-            fill 
-            style={{ objectFit: "cover" }}
+            width="100%"
+            height="100%"
+            objectFit="cover"
             onError={(e) => {
-              e.target.src = 'https://ui-avatars.com/api/?name=Pancito3D&background=0b2b33&color=7D00FF&size=1200';
+              const userKey = localStorage.getItem("currentUser");
+              const userName = userKey ? userKey.replace('user_', '').split('@')[0] : 'Usuario';
+              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=0b2b33&color=7D00FF&size=1200`;
             }}
           />
         </Box>
 
-        {/* Profile Header - NUEVA ESTRUCTURA */}
-        <Flex 
-          direction={{ base: "column", lg: "row" }}  // Móvil: columna, Desktop grande: fila
-          gap={{ base: 4, lg: 8 }}
-          align={{ base: "center", lg: "flex-start" }}
-          mb={8}
-        >
-          {/* 🔹 COLUMNA IZQUIERDA: Foto de perfil + Texto */}
+        {/* Profile Header */}
+        <Box p={{ base: 4, md: 6 }}>
           <Flex 
-            direction="column" 
-            align={{ base: "center", lg: "flex-start"}}
-            ml={{ base: 0, lg: 0}}
-            flex="1"
-            textAlign={{ base: "center", lg: "left" }}
+            direction={{ base: "column", lg: "row" }}
+            gap={6}
+            align={{ base: "center", lg: "flex-start" }}
+            justify="space-between"
           >
-            {/* Foto de perfil */}
-            <Avatar
-              src={user.profilePic}
-              size={{ base: "lg", md: "xl" }}
-              border="3px solid white"
-              bg="gray.800"
-              mb={4}
-            />
-            
-            {/* 🔹 TEXTO A LA IZQUIERDA DEBAJO DE LA FOTO */}
-            <Box>
-              <Heading 
-                size={{ base: "md", md: "lg" }} 
-                mb={1}
-              >
-                {user.name}
-              </Heading>
-              <Text 
-                fontSize={{ base: "sm", md: "md" }} 
-                color="gray.400" 
-                mb={2}
-              >
-                @{user.username}
-              </Text>
-              <Text 
-                mb={3} 
-                fontSize={{ base: "sm", md: "md" }}
-                lineHeight="1.6"
-                maxW="500px"
-              >
-                {user.description}
-              </Text>
-              <Text 
-                color="gray.400" 
-                mb={3}
-                fontSize={{ base: "sm", md: "md" }}
-              >
-                Miembro desde {user.joinedDate}
-              </Text>
-            </Box>
-          </Flex>
-
-          {/* 🔹 COLUMNA DERECHA: Botón + Siguiendo/Seguidores */}
-          <Flex 
-            direction="column" 
-            align="center" 
-            lg={{ align: "flex-end" }}
-            flex="0"
-            gap={4}
-          >
-            {/* Botón Editar Perfil - DERECHA */}
-            <Button 
-              variant="outline" 
-              colorScheme="purple" 
-              onClick={onOpen}
-              size={{ base: "sm", md: "md" }}
-              borderRadius="full"
-              w={{ base: "full", lg: "auto" }}
+            {/* Columna Izquierda - Avatar e Información */}
+            <Flex 
+              direction="column" 
+              align={{ base: "center", lg: "flex-start" }}
+              textAlign={{ base: "center", lg: "left" }}
+              flex="1"
             >
-              Editar perfil
-            </Button>
-            
-            {/* Siguiendo/Seguidores - DERECHA */}
-    
+              <Box mt={{ base: "-60px", lg: "-80px" }} mb={4}>
+                <Avatar
+                  src={user.profilePic}
+                  size={{ base: "xl", md: "2xl" }}
+                  border="4px solid black"
+                  bg="gray.800"
+                />
+              </Box>
+              
+              <VStack align={{ base: "center", lg: "flex-start" }} spacing={3}>
+                <Heading size={{ base: "lg", md: "xl" }}>
+                  {user.name}
+                </Heading>
+                
+                <Text fontSize={{ base: "md", md: "lg" }} color="gray.400">
+                  @{user.username}
+                </Text>
+                
+                {user.email && (
+                  <Text fontSize="sm" color="gray.500">
+                    {user.email}
+                  </Text>
+                )}
+                
+                <Text 
+                  fontSize={{ base: "sm", md: "md" }}
+                  lineHeight="1.6"
+                  maxW="500px"
+                  textAlign={{ base: "center", lg: "left" }}
+                >
+                  {user.description}
+                </Text>
+                
+                <HStack spacing={6} color="gray.400" fontSize="sm">
+                  <Text>Miembro desde {user.joinedDate}</Text>
+                  <Text>•</Text>
+                  <Text>{user.following} siguiendo</Text>
+                  <Text>•</Text>
+                  <Text>{user.followers} seguidores</Text>
+                </HStack>
+              </VStack>
+            </Flex>
+
+            {/* Columna Derecha - Botones */}
+            <VStack spacing={3}>
+              <Button 
+                variant="outline" 
+                colorScheme="purple" 
+                onClick={onOpen}
+                size="md"
+                borderRadius="full"
+                width="full"
+              >
+                Editar perfil
+              </Button>
+              
+              <Button 
+                variant="ghost" 
+                colorScheme="red" 
+                onClick={handleLogout}
+                size="sm"
+                width="full"
+              >
+                Cerrar sesión
+              </Button>
+            </VStack>
           </Flex>
-        </Flex>
+        </Box>
       </Box>
 
-      {/* Edit Profile Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size={{ base: "full", md: "2xl" }}>
-        <ModalOverlay />
-        <ModalContent 
-          bg="gray.800" 
-          color="white"
-          maxH="100vh"
-          overflowY="auto"
-        >
-          <ModalHeader>Editar Perfil</ModalHeader>
+      {/* Modal de Edición (se mantiene igual) */}
+      <Modal 
+        isOpen={isOpen} 
+        onClose={cancelEdit} 
+        size={{ base: "full", md: "2xl" }}
+      >
+        <ModalOverlay bg="blackAlpha.600" />
+        <ModalContent bg="gray.800" color="white" borderRadius="xl">
+          <ModalHeader borderBottom="1px solid" borderColor="gray.600">
+            Editar Perfil
+          </ModalHeader>
           <ModalCloseButton />
-          <ModalBody pb={6}>
-            <FormControl mb={4}>
-              <FormLabel>Nombre</FormLabel>
-              <Input name="name" value={editUser?.name || ""} onChange={handleChange} />
-            </FormControl>
-            <FormControl mb={4}>
-              <FormLabel>Usuario</FormLabel>
-              <Input name="username" value={editUser?.username || ""} onChange={handleChange} />
-            </FormControl>
-            <FormControl mb={4}>
-              <FormLabel>Descripción</FormLabel>
-              <Textarea 
-                name="description" 
-                value={editUser?.description || ""} 
-                onChange={handleChange}
-                placeholder="Cuéntanos sobre ti..."
-                rows={4}
-              />
-            </FormControl>
-            <FormControl mb={4}>
-              <FormLabel>Fecha de Nacimiento</FormLabel>
-              <Input type="date" name="birthdate" value={editUser?.birthdate || ""} onChange={handleChange} />
-            </FormControl>
-            <FormControl mb={4}>
-              <FormLabel>Foto de Perfil</FormLabel>
-              <Input type="file" accept="image/*" onChange={(e) => handleFileChange(e, "profilePic")} />
-            </FormControl>
-            <FormControl mb={4}>
-              <FormLabel>Banner</FormLabel>
-              <Input type="file" accept="image/*" onChange={(e) => handleFileChange(e, "banner")} />
-            </FormControl>
+          
+          <ModalBody py={6}>
+            <VStack spacing={4}>
+              <FormControl>
+                <FormLabel>Nombre</FormLabel>
+                <Input 
+                  name="name" 
+                  value={editUser?.name || ""} 
+                  onChange={handleChange}
+                  borderColor="gray.600"
+                />
+              </FormControl>
+              
+              <FormControl>
+                <FormLabel>Usuario</FormLabel>
+                <Input 
+                  name="username" 
+                  value={editUser?.username || ""} 
+                  onChange={handleChange}
+                  borderColor="gray.600"
+                />
+              </FormControl>
+              
+              <FormControl>
+                <FormLabel>Descripción</FormLabel>
+                <Textarea 
+                  name="description" 
+                  value={editUser?.description || ""} 
+                  onChange={handleChange}
+                  placeholder="Cuéntanos sobre ti..."
+                  rows={4}
+                  borderColor="gray.600"
+                />
+              </FormControl>
+              
+              <FormControl>
+                <FormLabel>Fecha de Nacimiento</FormLabel>
+                <Input 
+                  type="date" 
+                  name="birthdate" 
+                  value={editUser?.birthdate || ""} 
+                  onChange={handleChange}
+                  borderColor="gray.600"
+                />
+              </FormControl>
+              
+              <FormControl>
+                <FormLabel>Foto de Perfil</FormLabel>
+                <Input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={(e) => handleFileChange(e, "profilePic")}
+                  border="none"
+                />
+              </FormControl>
+              
+              <FormControl>
+                <FormLabel>Banner</FormLabel>
+                <Input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={(e) => handleFileChange(e, "banner")}
+                  border="none"
+                />
+              </FormControl>
+            </VStack>
           </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="purple" onClick={saveUser} mr={3}>
+          
+          <ModalFooter borderTop="1px solid" borderColor="gray.600">
+            <Button variant="outline" onClick={cancelEdit} mr={3}>
+              Cancelar
+            </Button>
+            <Button colorScheme="purple" onClick={saveUser}>
               Guardar
             </Button>
-            <Button colorScheme="purple" onClick={saveUser} mr={3}>Cancelar</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
