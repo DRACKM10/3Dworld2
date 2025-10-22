@@ -117,21 +117,5 @@
     "pdf": null,
     "files": [],
     "comments": []
-  },
-  {
-    "id": "a0ca33ea-23c8-491a-84e1-a5ffaa613b42",
-    "name": "Tuerca hexagonal ",
-    "description": "Este modelo 3D de tuerca hexagonal está diseñado con precisión y detalle, su geometría hexagonal y rosca interna son fieles a las especificaciones reales, lo que garantiza un ajuste realista y funcional",
-    "price": 15,
-    "images": [
-      "/images/09a90d05-7ba0-469f-8607-ff827769b891.png"
-    ],
-    "mainImageIndex": 0,
-    "summary": "",
-    "printSettings": "",
-    "videoLink": "",
-    "pdf": null,
-    "files": [],
-    "comments": []
   }
 ]

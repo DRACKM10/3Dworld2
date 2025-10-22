@@ -142,7 +142,6 @@ export default function Header() {
                 w="180px"
               >
                 <PopoverArrow bg="#7D00FF" />
-                <PopoverCloseButton color="#EDEDED" />
                 <PopoverBody display="flex" flexDirection="column" gap={2} p={3}>
                   <Link href="/perfil">
                     <Button

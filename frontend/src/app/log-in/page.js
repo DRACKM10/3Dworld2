@@ -140,7 +140,7 @@ export default function LoginPage() {
 
         // Redirigir después de un breve delay
         setTimeout(() => {
-          router.push("/dashboard");
+          router.push("/perfil");
         }, 1000);
         
       } else {
@@ -183,44 +183,6 @@ export default function LoginPage() {
     });
   };
 
-  // Función para testing
-  const handleTestLogin = async () => {
-    setIsGoogleLoading(true);
-    try {
-      const testUser = {
-        username: "Usuario Demo",
-        email: "demo@example.com"
-      };
-      
-      localStorage.setItem("usuario", testUser.username);
-      localStorage.setItem("userEmail", testUser.email);
-      localStorage.setItem("token", "demo-token-" + Date.now());
-
-      toast({
-        title: "Modo demo activado",
-        description: `Bienvenido ${testUser.username}`,
-        status: "success",
-        duration: 2000,
-        isClosable: true,
-      });
-
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 1000);
-      
-    } catch (err) {
-      toast({
-        title: "Error en login demo",
-        description: err.message,
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-    } finally {
-      setIsGoogleLoading(false);
-    }
-  };
-
   if (loading) {
     return (
       <Box
@@ -236,7 +198,7 @@ export default function LoginPage() {
   }
 
   if (isAuthenticated) {
-    router.push("/dashboard");
+    router.push("/perfil");
     return null;
   }
 
@@ -386,22 +348,6 @@ export default function LoginPage() {
             </Box>
           )}
         </Box>
-
-        {/* Botón de demo */}
-        <Button
-          width="full"
-          variant="outline"
-          borderColor="#00FF88"
-          color="#00FF88"
-          _hover={{
-            bg: "rgba(0, 255, 136, 0.1)",
-          }}
-          onClick={handleTestLogin}
-          mb={4}
-          size="sm"
-        >
-          🚀 Entrar en Modo Demo
-        </Button>
 
         <Text textAlign="center" color="#A0A0A0" fontSize="sm">
           ¿No tienes cuenta?{" "}
