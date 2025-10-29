@@ -109,8 +109,9 @@ export default function ProductPage() {
           <Image
             src={mainImage}
             alt={product.name || 'Producto'}
-            fill
-            style={{ objectFit: "cover", borderRadius: "8px" }}
+            height="400px"
+            width="100%"
+            style={{ objectFit: "contain", borderRadius: "8px" }}
             priority
             onError={(e) => { e.target.src = '/images/default.jpg'; console.error('Imagen no encontrada:', mainImage); }}
           />
@@ -153,8 +154,9 @@ export default function ProductPage() {
                 <Image
                   src={img}
                   alt={`${product.name || 'Producto'} - Imagen ${index + 1}`}
-                  fill
-                  style={{ objectFit: "cover", borderRadius: "8px" }}
+                  height="200px"
+                  width="100%"
+                  style={{ objectFit: "contain", borderRadius: "8px" }}
                   onError={(e) => { e.target.src = '/images/default.jpg'; console.error('Imagen adicional no encontrada:', img); }}
                 />
               </Box>

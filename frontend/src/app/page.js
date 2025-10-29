@@ -19,17 +19,17 @@ export default function Home() {
     return (
     <Box
       p={4}
+      bg="black"
       maxW="1200px"
       mx="auto"
       position="relative"
       zIndex={1}
       minHeight="100vh"
-      bgGradient="linear(to-b, #0F0F0F, #2E2E2E)"
     >
      
      <Flex justify="space-between" align="center" mb={6}>
           <Heading color="white">Nuestros Productos</Heading>
-          <Button colorScheme="teal" onClick={() => setIsModalOpen(true)}>
+          <Button color="white" bg="#5c212b"  _hover={{ bg:"#6d6c6c73", transform: "scale(1.05)",}} onClick={() => setIsModalOpen(true)}>
             Agregar Producto
           </Button>
         </Flex>

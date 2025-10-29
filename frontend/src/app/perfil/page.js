@@ -219,6 +219,7 @@ export default function Perfil() {
               align={{ base: "center", lg: "flex-start" }}
               textAlign={{ base: "center", lg: "left" }}
               flex="1"
+              color="rgba(255, 255, 255, 0.8)"
             >
               <Box mt={{ base: "-60px", lg: "-80px" }} mb={4}>
                 <Avatar
@@ -234,12 +235,12 @@ export default function Perfil() {
                   {user.name}
                 </Heading>
                 
-                <Text fontSize={{ base: "md", md: "lg" }} color="gray.400">
+                <Text fontSize={{ base: "md", md: "lg" }} color="white">
                   @{user.username}
                 </Text>
                 
                 {user.email && (
-                  <Text fontSize="sm" color="gray.500">
+                  <Text fontSize="sm" color="white">
                     {user.email}
                   </Text>
                 )}
@@ -249,11 +250,12 @@ export default function Perfil() {
                   lineHeight="1.6"
                   maxW="500px"
                   textAlign={{ base: "center", lg: "left" }}
+                  color="whiteAlpha.700"
                 >
-                  {user.description}
+                  {user.description} 
                 </Text>
                 
-                <HStack spacing={6} color="gray.400" fontSize="sm">
+                <HStack spacing={6} color="whiteAlpha.700" fontSize="sm">
                   <Text>Miembro desde {user.joinedDate}</Text>
                   <Text>•</Text>
                   <Text>{user.following} siguiendo</Text>

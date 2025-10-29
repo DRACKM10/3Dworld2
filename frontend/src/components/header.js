@@ -113,7 +113,7 @@ export default function Header() {
     <Box
       as="header"
       p={4}
-      bgGradient="linear(to-r, #0b2b33, #0f0f0f)"
+      bgGradient="linear(to-r, #5c212b, #5c212b)"
       color="#EDEDED"
       boxShadow="md"
       position="sticky"
@@ -132,11 +132,11 @@ export default function Header() {
         <Link href="/" style={{ textDecoration: "none" }}>
           <Heading
             size="md"
-            color="#7D00FF"
-            _hover={{ textShadow: "0 0 10px #7D00FF" }}
+            color="#ffffffff"
+            _hover={{ textShadow: "0 0 10px #000000ff" }}
             transition="all 0.3s ease-in-out"
           >
-            3Dworld
+            3DWORLD
           </Heading>
         </Link>
 
@@ -149,8 +149,8 @@ export default function Header() {
           borderRadius="lg"
           border="2px solid #ffffff"
           _focus={{
-            borderColor: "#790ceeff",
-            boxShadow: "0 0 0 1px #7D00FF",
+            borderColor: "#000000ff",
+            boxShadow: "0 0 0 1px #000000ff",
           }}
           _placeholder={{ color: "gray.500" }}
         />
@@ -159,11 +159,12 @@ export default function Header() {
         <Flex gap={4} flexWrap="wrap" align="center">
           <Link href="/productos" style={{ textDecoration: "none" }}>
             <Button
-              variant="outline"
-              color="#EDEDED"
-              borderColor="#7D00FF"
+              variant="surface"
+              bg="blackAlpha.700"  
+              color="#ffffffff"
+              borderColor="#000000ff"
               _hover={{
-                bgGradient: "linear(to-r, #7D00FF, #9B4DFF)",
+                bg:"#18181873",
                 transform: "scale(1.05)",
               }}
               transition="all 0.2s ease-in-out"
@@ -184,21 +185,21 @@ export default function Header() {
                   src={getAvatarSrc()}
                   size="sm"
                   cursor="pointer"
-                  border="2px solid #9B4DFF"
+                  border="2px solid #000000ff"
                   transition="all 0.2s ease-in-out"
                   _hover={{ transform: "scale(1.1)" }}
                 />
               </PopoverTrigger>
 
               <PopoverContent
-                bg="#1E1E1E"
-                border="1px solid #7D00FF"
+                bg="#130000ff"
+                border="1px solid #ffffffff"
                 color="#EDEDED"
                 borderRadius="lg"
-                boxShadow="0 0 15px rgba(125, 0, 255, 0.4)"
+                boxShadow="0 0 15px rgba(255, 255, 255, 0.4)"
                 w="180px"
               >
-                <PopoverArrow bg="#7D00FF" />
+                <PopoverArrow bg="#ffffffff" />
                 <PopoverCloseButton />
                 <PopoverBody display="flex" flexDirection="column" gap={2} p={3}>
                   {/* Información del usuario - SIN USAR COMPONENTE TEXT */}
@@ -229,11 +230,11 @@ export default function Header() {
                     <Button
                       w="full"
                       size="sm"
-                      variant="outline"
+                      variant="surface"
+                      bg="#5c212b"
                       color="#EDEDED"
-                      borderColor="#7D00FF"
-                      _hover={{
-                        bgGradient: "linear(to-r, #7D00FF, #9B4DFF)",
+                      borderColor="#000000ff"
+                      _hover={{bg:"#ff313173"
                       }}
                     >
                       Ver perfil
@@ -243,11 +244,10 @@ export default function Header() {
                   <Button
                     w="full"
                     size="sm"
-                    colorScheme="purple"
-                    variant="solid"
-                    bgGradient="linear(to-r, #7D00FF, #9B4DFF)"
-                    _hover={{
-                      bgGradient: "linear(to-r, #9B4DFF, #7D00FF)",
+                    bg="#5c212b"
+                    color="#EDEDED"
+                    variant="surface"
+                    _hover={{bg:"#ff313173"      
                     }}
                     onClick={handleLogout}
                   >

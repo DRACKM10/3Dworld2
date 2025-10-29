@@ -1,9 +1,19 @@
-import express from "express";
-import { getProducts, getProduct, addProduct } from "../controllers/productController.js";
+// routes/productRoutes.js
+import express from 'express';
+import { 
+  getProducts, 
+  getProduct, 
+  addProduct,
+  testCloudinary,
+  upload 
+} from '../controllers/productController.js';
+
 const router = express.Router();
 
-router.get("/", getProducts);
-router.get("/:id", getProduct);
-router.post("/", addProduct);
+// RUTAS DE PRODUCTOS
+router.get('/', getProducts);                    // GET /api/products
+router.get('/:id', getProduct);                  // GET /api/products/:id  
+router.post('/', upload.single('image'), addProduct); // POST /api/products
+router.get('/test/cloudinary', testCloudinary);  // GET /api/products/test/cloudinary
 
 export default router;

@@ -14,24 +14,28 @@ export default function CartIndicator() {
       <Tooltip 
         label="Ver carrito" 
         hasArrow 
-        bg="#1E1E1E" 
         color="#EDEDED"
-        border="1px solid #7D00FF"
+        variant="surface"
+        _hover={{
+          bg:"#18181873",
+          transform: "scale(1.05)",
+        }}
+        transition="all 0.2s ease-in-out"
       >
         <IconButton
           as={Link}
           href="/carrito"
           aria-label="Carrito de compras"
           icon={<>🛒</>}
-          variant="outline"
+          variant="surface"
           color="#EDEDED"
-          borderColor="#7D00FF"
+          bg="blackAlpha.700"
+          borderColor="#000000ff"
           fontSize="18px"
           size="md"
           _hover={{
-            bgGradient: "linear(to-r, #7D00FF, #9B4DFF)",
+            bg:"#18181873",
             transform: "scale(1.05)",
-            borderColor: "transparent"
           }}
           transition="all 0.2s ease-in-out"
         />

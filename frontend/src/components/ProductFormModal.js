@@ -1,3 +1,4 @@
+"use client";
 import {
   Modal,
   ModalOverlay,
@@ -13,168 +14,162 @@ import {
   Button,
   useToast,
   VStack,
-  Select,
   Box,
   Image,
-  Wrap,
-  WrapItem,
 } from '@chakra-ui/react';
 import { useState } from 'react';
 
 export default function ProductFormModal({ isOpen, onClose, onAddProduct }) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [price, setPrice] = useState('');
-  const [images, setImages] = useState([]);
-  const [mainImageIndex, setMainImageIndex] = useState(0);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    price: '',
+    category: '',
+    stock: ''
+  });
+  const [image, setImage] = useState(null);
+  const [previewImage, setPreviewImage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
+
+  const handleInputChange = (e) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: 'Error',
+          description: 'Solo se permiten archivos de imagen',
+          status: 'error',
+        });
+        return;
+      }
+      setImage(file);
+      
+      // Preview
+      const reader = new FileReader();
+      reader.onload = (e) => setPreviewImage(e.target.result);
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !description || !price || images.length === 0) {
+    
+    if (!formData.name || !formData.price || !image) {
       toast({
         title: 'Error',
-        description: 'Por favor, completa todos los campos e incluye al menos una imagen.',
+        description: 'Nombre, precio e imagen son requeridos',
         status: 'error',
-        duration: 3000,
-        isClosable: true,
       });
       return;
     }
 
-    const formData = new FormData();
-    formData.append('name', name);
-    formData.append('description', description);
-    formData.append('price', price);
-    images.forEach((image) => formData.append('images', image));
-    formData.append('mainImageIndex', mainImageIndex);
+    setIsLoading(true);
 
     try {
-      const response = await fetch('/api/products', {
+      const submitData = new FormData();
+      submitData.append('name', formData.name);
+      submitData.append('description', formData.description);
+      submitData.append('price', formData.price);
+      submitData.append('category', formData.category);
+      submitData.append('stock', formData.stock);
+      submitData.append('image', image);
+
+      const response = await fetch('http://localhost:8000/api/products', {
         method: 'POST',
-        body: formData,
+        body: submitData,
       });
 
-      if (!response.ok) throw new Error('Error al guardar el producto');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error);
+      }
 
-      const newProduct = await response.json();
-      onAddProduct(newProduct);
+      const result = await response.json();
+      onAddProduct(result.product);
+      
       toast({
-        title: 'Éxito',
-        description: 'Producto agregado correctamente.',
+        title: '✅ Producto creado',
+        description: 'El producto se agregó exitosamente',
         status: 'success',
-        duration: 3000,
-        isClosable: true,
       });
-      setName('');
-      setDescription('');
-      setPrice('');
-      setImages([]);
-      setMainImageIndex(0);
+
+      // Limpiar formulario
+      setFormData({ name: '', description: '', price: '', category: '', stock: '' });
+      setImage(null);
+      setPreviewImage('');
       onClose();
+      
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'No se pudo guardar el producto.',
+        title: '❌ Error',
+        description: error.message,
         status: 'error',
-        duration: 3000,
-        isClosable: true,
       });
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  const previewImages = images.map((file) => ({
-    url: URL.createObjectURL(file),
-    name: file.name,
-  }));
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Agregar Nuevo Producto</ModalHeader>
+        <ModalHeader>Agregar Producto</ModalHeader>
         <ModalCloseButton />
-        <ModalBody>
-          <VStack spacing={4}>
-            <FormControl isRequired>
-              <FormLabel>Nombre</FormLabel>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Nombre del producto"
-              />
-            </FormControl>
-            <FormControl isRequired>
-              <FormLabel>Descripción</FormLabel>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Descripción del producto"
-              />
-            </FormControl>
-            <FormControl isRequired>
-              <FormLabel>Precio</FormLabel>
-              <Input
-                type="number"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="Precio del producto"
-                step="0.01"
-              />
-            </FormControl>
-            <FormControl isRequired>
-              <FormLabel>Imágenes</FormLabel>
-              <Input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => setImages(Array.from(e.target.files))}
-              />
-            </FormControl>
-            {images.length > 0 && (
-              <>
-                <FormControl>
-                  <FormLabel>Previsualización</FormLabel>
-                  <Wrap spacing={4}>
-                    {previewImages.map((img, index) => (
-                      <WrapItem key={index}>
-                        <Box position="relative" width="100px" height="100px" borderRadius="8px" overflow="hidden">
-                          <Image
-                            src={img.url}
-                            alt={`Previsualización ${img.name}`}
-                            fill
-                            style={{ objectFit: 'cover', borderRadius: '8px' }}
-                          />
-                        </Box>
-                      </WrapItem>
-                    ))}
-                  </Wrap>
-                </FormControl>
-                <FormControl>
-                  <FormLabel>Imagen principal</FormLabel>
-                  <Select
-                    value={mainImageIndex}
-                    onChange={(e) => setMainImageIndex(Number(e.target.value))}
-                  >
-                    {images.map((_, index) => (
-                      <option key={index} value={index}>
-                        Imagen {index + 1} ({previewImages[index].name})
-                      </option>
-                    ))}
-                  </Select>
-                </FormControl>
-              </>
-            )}
-          </VStack>
-        </ModalBody>
-        <ModalFooter>
-          <Button colorScheme="teal" onClick={handleSubmit}>
-            Guardar
-          </Button>
-          <Button variant="ghost" onClick={onClose} ml={3}>
-            Cancelar
-          </Button>
-        </ModalFooter>
+        <form onSubmit={handleSubmit}>
+          <ModalBody>
+            <VStack spacing={4}>
+              <FormControl isRequired>
+                <FormLabel>Nombre</FormLabel>
+                <Input name="name" value={formData.name} onChange={handleInputChange} />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Descripción</FormLabel>
+                <Textarea name="description" value={formData.description} onChange={handleInputChange} />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel>Precio</FormLabel>
+                <Input name="price" type="number" step="0.01" value={formData.price} onChange={handleInputChange} />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Categoría</FormLabel>
+                <Input name="category" value={formData.category} onChange={handleInputChange} />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Stock</FormLabel>
+                <Input name="stock" type="number" value={formData.stock} onChange={handleInputChange} />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel>Imagen</FormLabel>
+                <Input type="file" accept="image/*" onChange={handleImageChange} />
+              </FormControl>
+
+              {previewImage && (
+                <Box>
+                  <Image src={previewImage} alt="Preview" maxH="200px" />
+                  <Box fontSize="sm" color="green.600">✅ Se subirá a Cloudinary</Box>
+                </Box>
+              )}
+            </VStack>
+          </ModalBody>
+
+          <ModalFooter>
+            <Button variant="outline" mr={3} onClick={onClose}>Cancelar</Button>
+            <Button colorScheme="blue" type="submit" isLoading={isLoading}>
+              Crear Producto
+            </Button>
+          </ModalFooter>
+        </form>
       </ModalContent>
     </Modal>
   );

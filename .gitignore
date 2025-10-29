@@ -1,4 +1,4 @@
-# Ignorar archivos de entorno
+aw# Ignorar archivos de entorno
 .env
 backend/.env
 frontend/.env

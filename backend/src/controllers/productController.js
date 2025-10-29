@@ -1,17 +1,10 @@
+// controllers/productController.js - SIN CLOUDINARY
 import { getAllProducts, getProductById, createProduct } from "../models/productModel.js";
+import { upload } from "../config/multer.js"; // ← Cambia esta importación
 
-/**
- * Obtiene todos los productos disponibles.
- * @param {Object} req - Objeto de solicitud.
- * @param {Object} res - Objeto de respuesta.
- * @returns {Promise<void>} - Responde con la lista de productos o un error.
- */
 export const getProducts = async (req, res) => {
   try {
     const products = await getAllProducts();
-    if (!products || products.length === 0) {
-      return res.status(404).json({ error: "No se encontraron productos" });
-    }
     res.json(products);
   } catch (err) {
     console.error("Error en getProducts:", err);
@@ -19,12 +12,6 @@ export const getProducts = async (req, res) => {
   }
 };
 
-/**
- * Obtiene un producto por su ID.
- * @param {Object} req - Objeto de solicitud con id en params.
- * @param {Object} res - Objeto de respuesta.
- * @returns {Promise<void>} - Responde con el producto o un error.
- */
 export const getProduct = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -43,36 +30,47 @@ export const getProduct = async (req, res) => {
   }
 };
 
-/**
- * Crea un nuevo producto.
- * @param {Object} req - Objeto de solicitud con datos del producto en body.
- * @param {Object} res - Objeto de respuesta.
- * @returns {Promise<void>} - Responde con el producto creado o un error.
- */
 export const addProduct = async (req, res) => {
+  console.log('📤 Subiendo producto...');
+  
   try {
-    const { name, price, image } = req.body;
-
-    // Validaciones básicas
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
-      return res.status(400).json({ error: "name es requerido y debe ser una cadena no vacía" });
-    }
-    if (!Number.isFinite(price) || price < 0) {
-      return res.status(400).json({ error: "price debe ser un número positivo" });
-    }
-    if (!image || typeof image !== "string") {
-      return res.status(400).json({ error: "image es requerido y debe ser una cadena" });
+    if (!req.file) {
+      return res.status(400).json({ error: "La imagen es requerida" });
     }
 
-    // Opcional: Verificar autenticación
-    // if (!req.user || !req.user.isAdmin) {
-    //   return res.status(403).json({ error: "No autorizado para crear productos" });
-    // }
+    console.log('✅ Archivo guardado:', req.file.filename);
 
-    const product = await createProduct(req.body);
-    res.status(201).json(product);
+    const { name, description, price, category, stock } = req.body;
+
+    if (!name || !price) {
+      return res.status(400).json({ error: "Nombre y precio son requeridos" });
+    }
+
+    // Guardar en BD con la ruta local
+    const productData = {
+      name: name.trim(),
+      description: description || '',
+      price: parseFloat(price),
+      image: `/uploads/${req.file.filename}`, // ← Ruta local
+      category: category || 'General',
+      stock: stock ? parseInt(stock) : 0
+    };
+
+    console.log('💾 Guardando en BD:', productData);
+    const newProduct = await createProduct(productData);
+    
+    console.log('🎉 Producto creado exitosamente!');
+    
+    res.status(201).json({
+      success: true,
+      message: "Producto creado exitosamente",
+      product: newProduct
+    });
+
   } catch (err) {
-    console.error("Error en addProduct:", err);
-    res.status(500).json({ error: "Error interno del servidor" });
+    console.error("❌ Error en addProduct:", err);
+    res.status(500).json({ error: "Error interno del servidor: " + err.message });
   }
 };
+
+export { upload };

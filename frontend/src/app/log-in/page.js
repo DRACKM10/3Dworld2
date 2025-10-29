@@ -217,7 +217,7 @@ export default function LoginPage() {
         h="100vh"
         bg="#0F0F0F"
       >
-        <Spinner size="xl" color="#7D00FF" />
+        <Spinner size="xl" color="#5c212b" />
       </Box>
     );
   }
