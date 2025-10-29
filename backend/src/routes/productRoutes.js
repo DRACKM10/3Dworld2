@@ -4,16 +4,17 @@ import {
   getProducts, 
   getProduct, 
   addProduct,
-  testCloudinary,
+  updateProduct,
+  deleteProduct,
   upload 
 } from '../controllers/productController.js';
 
 const router = express.Router();
 
-// RUTAS DE PRODUCTOS
-router.get('/', getProducts);                    // GET /api/products
-router.get('/:id', getProduct);                  // GET /api/products/:id  
-router.post('/', upload.single('image'), addProduct); // POST /api/products
-router.get('/test/cloudinary', testCloudinary);  // GET /api/products/test/cloudinary
+router.get('/', getProducts);
+router.get('/:id', getProduct);
+router.post('/', upload.single('image'), addProduct);
+router.put('/:id', upload.single('image'), updateProduct); // ← NUEVO
+router.delete('/:id', deleteProduct); // ← NUEVO
 
 export default router;

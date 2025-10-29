@@ -17,9 +17,9 @@ import {
   Box,
   Image,
 } from '@chakra-ui/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-export default function ProductFormModal({ isOpen, onClose, onAddProduct }) {
+export default function ProductFormModal({ isOpen, onClose, onAddProduct, editProduct }) {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -31,6 +31,25 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct }) {
   const [previewImage, setPreviewImage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
+
+  // Cargar datos si es edición
+  useEffect(() => {
+    if (editProduct) {
+      setFormData({
+        name: editProduct.name || '',
+        description: editProduct.description || '',
+        price: editProduct.price || '',
+        category: editProduct.category || '',
+        stock: editProduct.stock || ''
+      });
+      setPreviewImage(editProduct.image || '');
+    } else {
+      // Limpiar formulario
+      setFormData({ name: '', description: '', price: '', category: '', stock: '' });
+      setImage(null);
+      setPreviewImage('');
+    }
+  }, [editProduct, isOpen]);
 
   const handleInputChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -49,7 +68,6 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct }) {
       }
       setImage(file);
       
-      // Preview
       const reader = new FileReader();
       reader.onload = (e) => setPreviewImage(e.target.result);
       reader.readAsDataURL(file);
@@ -59,10 +77,20 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.price || !image) {
+    if (!formData.name || !formData.price) {
       toast({
         title: 'Error',
-        description: 'Nombre, precio e imagen son requeridos',
+        description: 'Nombre y precio son requeridos',
+        status: 'error',
+      });
+      return;
+    }
+
+    // Si es edición y no hay nueva imagen, requerir imagen existente
+    if (!editProduct && !image) {
+      toast({
+        title: 'Error',
+        description: 'La imagen es requerida',
         status: 'error',
       });
       return;
@@ -77,10 +105,23 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct }) {
       submitData.append('price', formData.price);
       submitData.append('category', formData.category);
       submitData.append('stock', formData.stock);
-      submitData.append('image', image);
+      
+      if (image) {
+        submitData.append('image', image);
+      }
+      
+      if (editProduct && !image) {
+        submitData.append('currentImage', editProduct.image);
+      }
 
-      const response = await fetch('http://localhost:8000/api/products', {
-        method: 'POST',
+      const url = editProduct 
+        ? `http://localhost:8000/api/products/${editProduct.id}`
+        : 'http://localhost:8000/api/products';
+      
+      const method = editProduct ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         body: submitData,
       });
 
@@ -93,8 +134,8 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct }) {
       onAddProduct(result.product);
       
       toast({
-        title: '✅ Producto creado',
-        description: 'El producto se agregó exitosamente',
+        title: editProduct ? '✅ Producto actualizado' : '✅ Producto creado',
+        description: `El producto se ${editProduct ? 'actualizó' : 'agregó'} exitosamente`,
         status: 'success',
       });
 
@@ -119,7 +160,7 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct }) {
     <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Agregar Producto</ModalHeader>
+        <ModalHeader>{editProduct ? 'Editar' : 'Agregar'} Producto</ModalHeader>
         <ModalCloseButton />
         <form onSubmit={handleSubmit}>
           <ModalBody>
@@ -149,15 +190,17 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct }) {
                 <Input name="stock" type="number" value={formData.stock} onChange={handleInputChange} />
               </FormControl>
 
-              <FormControl isRequired>
-                <FormLabel>Imagen</FormLabel>
+              <FormControl isRequired={!editProduct}>
+                <FormLabel>Imagen {editProduct && '(dejar vacío para mantener actual)'}</FormLabel>
                 <Input type="file" accept="image/*" onChange={handleImageChange} />
               </FormControl>
 
               {previewImage && (
                 <Box>
                   <Image src={previewImage} alt="Preview" maxH="200px" />
-                  <Box fontSize="sm" color="green.600">✅ Se subirá a Cloudinary</Box>
+                  <Box fontSize="sm" color="green.600">
+                    ✅ {image ? 'Nueva imagen' : 'Imagen actual'}
+                  </Box>
                 </Box>
               )}
             </VStack>
@@ -166,7 +209,7 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct }) {
           <ModalFooter>
             <Button variant="outline" mr={3} onClick={onClose}>Cancelar</Button>
             <Button colorScheme="blue" type="submit" isLoading={isLoading}>
-              Crear Producto
+              {editProduct ? 'Actualizar' : 'Crear'} Producto
             </Button>
           </ModalFooter>
         </form>

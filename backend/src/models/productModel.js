@@ -43,3 +43,35 @@ export const createProduct = async (product) => {
     throw new Error(`Error al crear producto: ${error.message}`);
   }
 };
+
+export const updateProductById = async (id, product) => {
+  const { name, description, price, image, category, stock } = product;
+
+  try {
+    await pool.query(
+      "UPDATE products SET name = ?, description = ?, price = ?, image = ?, category = ?, stock = ? WHERE id = ?",
+      [name, description, price, image, category, stock, id]
+    );
+    
+    const [updatedProduct] = await pool.query(
+      "SELECT * FROM products WHERE id = ?", 
+      [id]
+    );
+    
+    return updatedProduct[0];
+  } catch (error) {
+    throw new Error(`Error al actualizar producto: ${error.message}`);
+  }
+};
+
+export const deleteProductById = async (id) => {
+  try {
+    // Primero eliminar del carrito
+    await pool.query("DELETE FROM cart WHERE product_id = ?", [id]);
+    
+    // Luego eliminar el producto
+    await pool.query("DELETE FROM products WHERE id = ?", [id]);
+  } catch (error) {
+    throw new Error(`Error al eliminar producto: ${error.message}`);
+  }
+};
