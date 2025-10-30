@@ -157,42 +157,42 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl">
+    <Modal isOpen={isOpen} onClose={onClose} size="xl" >
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>{editProduct ? 'Editar' : 'Agregar'} Producto</ModalHeader>
         <ModalCloseButton />
         <form onSubmit={handleSubmit}>
-          <ModalBody>
+          <ModalBody >
             <VStack spacing={4}>
               <FormControl isRequired>
                 <FormLabel>Nombre</FormLabel>
-                <Input name="name" value={formData.name} onChange={handleInputChange} />
+                <Input name="name" value={formData.name} onChange={handleInputChange} bg="blackAlpha.400"/>
               </FormControl>
 
               <FormControl>
                 <FormLabel>Descripción</FormLabel>
-                <Textarea name="description" value={formData.description} onChange={handleInputChange} />
+                <Textarea name="description" value={formData.description} onChange={handleInputChange} bg="blackAlpha.400"/>
               </FormControl>
 
               <FormControl isRequired>
                 <FormLabel>Precio</FormLabel>
-                <Input name="price" type="number" step="0.01" value={formData.price} onChange={handleInputChange} />
+                <Input name="price" type="number" step="0.01" value={formData.price} onChange={handleInputChange} bg="blackAlpha.400" />
               </FormControl>
 
               <FormControl>
                 <FormLabel>Categoría</FormLabel>
-                <Input name="category" value={formData.category} onChange={handleInputChange} />
+                <Input name="category" value={formData.category} onChange={handleInputChange} bg="blackAlpha.400" />
               </FormControl>
 
               <FormControl>
                 <FormLabel>Stock</FormLabel>
-                <Input name="stock" type="number" value={formData.stock} onChange={handleInputChange} />
+                <Input name="stock" type="number" value={formData.stock} onChange={handleInputChange} bg="blackAlpha.400"/>
               </FormControl>
 
               <FormControl isRequired={!editProduct}>
                 <FormLabel>Imagen {editProduct && '(dejar vacío para mantener actual)'}</FormLabel>
-                <Input type="file" accept="image/*" onChange={handleImageChange} />
+                <Input type="file" accept="image/*" onChange={handleImageChange} variant="surface" />
               </FormControl>
 
               {previewImage && (
@@ -207,8 +207,8 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
           </ModalBody>
 
           <ModalFooter>
-            <Button variant="outline" mr={3} onClick={onClose}>Cancelar</Button>
-            <Button colorScheme="blue" type="submit" isLoading={isLoading}>
+            <Button bg="#646464ff" _hover={{bg: "#a1a1a1ff",}} variant="outline" mr={3} onClick={onClose}>Cancelar</Button>
+            <Button bg="#5c212b" color="white" type="submit" isLoading={isLoading} _hover={{bg: "#333333",}}>
               {editProduct ? 'Actualizar' : 'Crear'} Producto
             </Button>
           </ModalFooter>

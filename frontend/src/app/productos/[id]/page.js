@@ -19,10 +19,9 @@ export default function ProductPage() {
   useEffect(() => {
     async function fetchProduct() {
       try {
-        const response = await fetch(`/api/products`);
-        if (!response.ok) throw new Error('Error en la respuesta de la API');
-        const products = await response.json();
-        const foundProduct = products.find((p) => p.id === id);
+       const response = await fetch(`http://localhost:8000/api/products/${id}`);
+        if (!response.ok) throw new Error('Error al cargar el producto');
+        const foundProduct = await response.json();
         if (!foundProduct) throw new Error('Producto no encontrado');
         if (!foundProduct.images || foundProduct.images.length === 0) {
           console.warn('Producto sin imágenes:', id);
@@ -49,7 +48,7 @@ export default function ProductPage() {
 
   if (!product) return <Text color="white">Producto no encontrado</Text>;
 
-  const mainImage = product.images[product.mainImageIndex] || product.images[0] || '/images/default.jpg';
+  const mainImage = product.image || (product.images && product.images[product.mainImageIndex]) || (product.images && product.images[0]) || '/images/default.jpg';
   const additionalImages = product.images.filter((_, index) => index !== product.mainImageIndex).length > 0
     ? product.images.filter((_, index) => index !== product.mainImageIndex)
     : [];
@@ -127,12 +126,13 @@ export default function ProductPage() {
           </Text>
           <Text mb={4}>{product.description || 'Sin descripción'}</Text>
           <Button
-            colorScheme="purple"
+            bg="#5c212b" 
             variant="solid"
             width="100%"
+            color="white"
             mb={4}
             onClick={() => alert(`"${product.name || 'Producto'}" agregado al carrito!`)}
-            _hover={{ bg: "purple.600", transform: "scale(1.05)" }}
+            _hover={{ bg: "#6d6c6c73", transform: "scale(1.05)" }}
           >
             Agregar al carrito
           </Button>
@@ -202,7 +202,7 @@ export default function ProductPage() {
                     </Link>
                   )}
                 </FormControl>
-                <Button colorScheme="teal" onClick={handleSaveSettings}>
+                <Button colorScheme="teal" bg="#5c212b" color="white" _hover={{ bg:"#6d6c6c73", transform: "scale(1.05)" }} onClick={handleSaveSettings}>
                   Guardar
                 </Button>
               </VStack>
@@ -226,7 +226,7 @@ export default function ProductPage() {
                     onChange={(e) => setFileUpload(e.target.files[0])}
                   />
                 </FormControl>
-                <Button colorScheme="teal" onClick={handleSaveSettings}>
+                <Button colorScheme="teal" bg="#5c212b" color="white" _hover={{ bg:"#6d6c6c73", transform: "scale(1.05)" }} onClick={handleSaveSettings}>
                   Guardar
                 </Button>
               </VStack>
@@ -234,19 +234,19 @@ export default function ProductPage() {
             <TabPanel>
               <VStack spacing={4} align="stretch" color="white">
                 <Accordion allowMultiple>
-                  {product.comments && product.comments.map((comment, index) => (
+                  {product.comments && product.comments.map((commentItem, index) => (
                     <AccordionItem key={index}>
                       <h2>
                         <AccordionButton>
                           <Box flex="1" textAlign="left">
-                            {comment.user} - {comment.date}
+                            {commentItem.user} - {commentItem .date}
                           </Box>
                           <AccordionIcon />
                         </AccordionButton>
                       </h2>
                       <AccordionContent pb={4}>
-                        <Text>{comment.content}</Text>
-                        {comment.replies && comment.replies.map((reply, rIndex) => (
+                        <Text>{commentItem.content}</Text>
+                        {commentItem.replies && commentItem.replies.map((reply, rIndex) => (
                           <Box key={rIndex} ml={4} mt={2} borderLeft="2px solid white" pl={4}>
                             <Text fontWeight="bold">{reply.user} - {reply.date}</Text>
                             <Text>{reply.content}</Text>
@@ -269,7 +269,7 @@ export default function ProductPage() {
                 <FormControl mt={4}>
                   <FormLabel>Agregar comentario</FormLabel>
                   <Input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Escribe un comentario" />
-                  <Button mt={2} onClick={handleAddComment}>
+                  <Button mt={2} bg="#5c212b" color="white" _hover={{ bg:"#6d6c6c73", transform: "scale(1.05)" }} onClick={handleAddComment}>
                     Enviar
                   </Button>
                 </FormControl>

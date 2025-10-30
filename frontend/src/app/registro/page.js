@@ -100,7 +100,7 @@ export default function RegisterPage() {
         bg="rgba(20, 20, 20, 0.85)"
         p={8}
         borderRadius="2xl"
-        boxShadow="0 0 20px rgba(125, 0, 255, 0.4)"
+        boxShadow="0 0 20px #5c212b"
         maxW="400px"
         width="100%"
       >
@@ -108,7 +108,7 @@ export default function RegisterPage() {
           mb={6}
           textAlign="center"
           color="#ffffff"
-          textShadow="0 0 10px rgba(125, 0, 255, 0.6)"
+          textShadow="0 0 10px #5c212b"
         >
           Registrarse
         </Heading>
@@ -123,10 +123,10 @@ export default function RegisterPage() {
               placeholder="Ingresa tu nombre de usuario"
               bg="#EDEDED"
               color="#0F0F0F"
-              border="2px solid #7D00FF"
+              border="2px solid #5c212b"
               _focus={{
-                borderColor: "#9B4DFF",
-                boxShadow: "0 0 10px #7D00FF",
+                borderColor: "#5c212b",
+                boxShadow: "0 0 10px #5c212b",
               }}
               required
               disabled={loading}
@@ -143,10 +143,10 @@ export default function RegisterPage() {
               placeholder="Ingresa tu correo"
               bg="#EDEDED"
               color="#0F0F0F"
-              border="2px solid #7D00FF"
+              border="2px solid #5c212b"
               _focus={{
-                borderColor: "#9B4DFF",
-                boxShadow: "0 0 10px #7D00FF",
+                borderColor: "#5c212b",
+                boxShadow: "0 0 10px #5c212b",
               }}
               required
               disabled={loading}
@@ -164,10 +164,10 @@ export default function RegisterPage() {
                 placeholder="Ingresa tu contraseña"
                 bg="#EDEDED"
                 color="#0F0F0F"
-                border="2px solid #7D00FF"
+                border="2px solid #5c212b"
                 _focus={{
-                  borderColor: "#9B4DFF",
-                  boxShadow: "0 0 10px #7D00FF",
+                  borderColor: "#5c212b",
+                  boxShadow: "0 0 10px #5c212b",
                 }}
                 required
                 disabled={loading}
@@ -179,7 +179,7 @@ export default function RegisterPage() {
                   size="sm"
                   onClick={() => setShowPassword(!showPassword)}
                   bg="transparent"
-                  color="#7D00FF"
+                  color="#5c212b"
                   disabled={loading}
                 />
               </InputRightElement>
@@ -197,10 +197,10 @@ export default function RegisterPage() {
                 placeholder="Confirma tu contraseña"
                 bg="#EDEDED"
                 color="#0F0F0F"
-                border="2px solid #7D00FF"
+                border="2px solid #5c212b"
                 _focus={{
-                  borderColor: "#9B4DFF",
-                  boxShadow: "0 0 10px #7D00FF",
+                  borderColor: "#5c212b",
+                  boxShadow: "0 0 10px #5c212b",
                 }}
                 required
                 disabled={loading}
@@ -214,7 +214,7 @@ export default function RegisterPage() {
                     setShowConfirmPassword(!showConfirmPassword)
                   }
                   bg="transparent"
-                  color="#7D00FF"
+                  color="#5c212b"
                   disabled={loading}
                 />
               </InputRightElement>
@@ -226,11 +226,10 @@ export default function RegisterPage() {
           <Button
             type="submit"
             width="full"
-            bgGradient="linear(to-r, #7D00FF, #9B4DFF)"
+            bg="#5c212b"
             color="#EDEDED"
             _hover={{
-              bgGradient: "linear(to-r, #9B4DFF, #7D00FF)",
-              transform: "scale(1.05)",
+            bg:"#6d6c6c73", transform: "scale(1.05)" 
             }}
             transition="all 0.2s ease-in-out"
             mb={4}
@@ -246,10 +245,10 @@ export default function RegisterPage() {
             <Link
               as={NextLink}
               href="/log-in"
-              color="#7D00FF"
+              color="#ad3e50ff"
               _hover={{
                 textDecoration: "underline",
-                textShadow: "0 0 8px #7D00FF",
+                textShadow: "0 0 8px #5c212b",
               }}
             >
               Inicia sesión aquí

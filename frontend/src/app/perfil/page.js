@@ -151,7 +151,7 @@ export default function Perfil() {
   if (loading) {
     return (
       <Box bg="#121212" minH="100vh" display="flex" alignItems="center" justifyContent="center">
-        <Spinner size="xl" color="#7D00FF" />
+        <Spinner size="xl" color="#ffffffff" />
       </Box>
     );
   }
@@ -179,7 +179,7 @@ export default function Perfil() {
         maxW="1200px" 
         mx="auto" 
         px={{ base: 4, md: 6 }}
-        border="1px solid #9B4DFF"
+        border="1px solid #5c212b"
         borderRadius="16px"
         bg="black"
         overflow="hidden"
@@ -190,6 +190,7 @@ export default function Perfil() {
           height={{ base: "140px", md: "200px", lg: "240px" }} 
           width="100%"
           overflow="hidden" 
+          paddingTop="1px"
         >
           <Image 
             src={user.banner} 
@@ -268,25 +269,18 @@ export default function Perfil() {
             {/* Columna Derecha - Botones */}
             <VStack spacing={3}>
               <Button 
-                variant="outline" 
-                colorScheme="purple" 
+                variant="surface" 
+                color="white"
+                bg="#5c212b"
                 onClick={onOpen}
                 size="md"
                 borderRadius="full"
                 width="full"
+                _hover={{ bg:"#6d6c6c73", transform: "scale(1.05)" }} 
               >
                 Editar perfil
               </Button>
               
-              <Button 
-                variant="ghost" 
-                colorScheme="red" 
-                onClick={handleLogout}
-                size="sm"
-                width="full"
-              >
-                Cerrar sesión
-              </Button>
             </VStack>
           </Flex>
         </Box>

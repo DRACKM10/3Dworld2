@@ -240,7 +240,7 @@ export default function LoginPage() {
         bg="rgba(20, 20, 20, 0.85)"
         p={8}
         borderRadius="2xl"
-        boxShadow="0 0 20px rgba(125, 0, 255, 0.4)"
+        boxShadow="0 0 20px #5c212b"
         maxW="400px"
         width="100%"
         backdropFilter="blur(10px)"
@@ -249,8 +249,9 @@ export default function LoginPage() {
           mb={6}
           textAlign="center"
           color="#FFFFFFFF"
-          textShadow="0 0 10px rgba(125, 0, 255, 0.6)"
+          textShadow="0 0 10px #5c212b"
           fontSize="2xl"
+          
         >
           Iniciar Sesión
         </Heading>
@@ -270,8 +271,8 @@ export default function LoginPage() {
               _placeholder={{ color: "gray.500" }}
               border="2px solid #333333"
               _focus={{
-                borderColor: "#7D00FF",
-                boxShadow: "0 0 10px rgba(125, 0, 255, 0.4)",
+                borderColor: "#5c212b",
+                boxShadow: "0 0 10px #5c212b",
               }}
               required
             />
@@ -293,8 +294,8 @@ export default function LoginPage() {
                 _placeholder={{ color: "gray.500" }}
                 border="2px solid #333333"
                 _focus={{
-                  borderColor: "#7D00FF",
-                  boxShadow: "0 0 10px rgba(125, 0, 255, 0.4)",
+                  borderColor: "#5c212b",
+                  boxShadow: "0 0 10px #5c212b",
                 }}
                 required
                 pr="3.5rem"
@@ -308,9 +309,9 @@ export default function LoginPage() {
                   size="sm"
                   onClick={handleTogglePassword}
                   bg="transparent"
-                  color="#7D00FF"
+                  color="#5c212b"
                   _hover={{
-                    bg: "rgba(125, 0, 255, 0.1)",
+                    bg: "rgba(65, 37, 37, 0.66)",
                   }}
                 />
               </InputRightElement>
@@ -323,10 +324,10 @@ export default function LoginPage() {
           <Button
             type="submit"
             width="full"
-            bgGradient="linear(to-r, #7D00FF, #9B4DFF)"
+            bg="#5c212b"
             color="#EDEDED"
             _hover={{
-              bgGradient: "linear(to-r, #9B4DFF, #7D00FF)",
+              bg:"#333333",
               transform: "scale(1.02)",
             }}
             transition="all 0.2s"
@@ -340,7 +341,7 @@ export default function LoginPage() {
           <Text textAlign="center" color="#A0A0A0" mb={6} fontSize="sm">
             <Link
               href="/reset-password"
-              color="#9B4DFF"
+              color="white"
               _hover={{ textDecoration: "underline" }}
             >
               ¿Olvidaste tu contraseña?
@@ -352,13 +353,13 @@ export default function LoginPage() {
 
         {/* Google Login Button */}
         <Box mb={4}>
-          <Text textAlign="center" color="#A0A0A0" fontSize="sm" mb={3}>
+          <Text textAlign="center" color="#cccbcbff" fontSize="sm" mb={3}>
             O continúa con
           </Text>
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={handleGoogleError}
-            theme="filled_blue"
+            theme="filled_white"
             size="large"
             width="100%"
             text="continue_with"
@@ -374,11 +375,11 @@ export default function LoginPage() {
           )}
         </Box>
 
-        <Text textAlign="center" color="#A0A0A0" fontSize="sm">
+        <Text textAlign="center" color="#d4d4d4ff" fontSize="sm">
           ¿No tienes cuenta?{" "}
           <Link
             href="/registro"
-            color="#7D00FF"
+            color="#ad3e50ff"
             _hover={{ textDecoration: "underline" }}
           >
             Regístrate aquí

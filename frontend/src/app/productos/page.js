@@ -140,10 +140,10 @@ export default function Products() {
             placeholder="Buscar productos..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            bg="gray.800"
+            bg="white"
             color="white"
             border="1px solid"
-            borderColor="gray.600"
+            borderColor="#5c212b"
             _placeholder={{ color: "gray.400" }}
           />
         </InputGroup>
@@ -155,8 +155,8 @@ export default function Products() {
           <Button
             key={category}
             size="sm"
-            colorScheme={selectedCategory === category ? "purple" : "gray"}
-            variant={selectedCategory === category ? "solid" : "outline"}
+            colorScheme={selectedCategory === category ? "black" : "black"} bg="#5c212b" color="white" _hover={{ bg:"#6d6c6c73", transform: "scale(1.05)" }} 
+            variant={selectedCategory === category ? "outline" : "outline"}
             onClick={() => setSelectedCategory(category)}
           >
             {category}

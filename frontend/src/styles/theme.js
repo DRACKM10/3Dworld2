@@ -4,8 +4,8 @@ import { extendTheme } from "@chakra-ui/react";
 const theme = extendTheme({
   styles: {
     global: {
-      body: {
-        bgGradient: "linear(to-b, #0F0F0F, #2E2E2E)",
+      body: { 
+        bg: "black"
       },
     },
   },
@@ -29,5 +29,6 @@ const theme = extendTheme({
     },
   },
 });
+
 
 export default theme;

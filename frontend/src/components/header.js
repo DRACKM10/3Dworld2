@@ -230,12 +230,15 @@ export default function Header() {
                     <Button
                       w="full"
                       size="sm"
-                      variant="surface"
                       bg="#5c212b"
                       color="#EDEDED"
-                      borderColor="#000000ff"
-                      _hover={{bg:"#ff313173"
+                      variant="outline"
+                       borderColor="#5c212b"
+                      _hover={{
+                       bg:"#18181873",
+                        transform: "scale(1.05)",
                       }}
+                      transition="all 0.2s ease-in-out"
                     >
                       Ver perfil
                     </Button>
@@ -246,9 +249,13 @@ export default function Header() {
                     size="sm"
                     bg="#5c212b"
                     color="#EDEDED"
-                    variant="surface"
-                    _hover={{bg:"#ff313173"      
-                    }}
+                    variant="outline"
+                    borderColor="#5c212b"
+                      _hover={{
+                       bg:"#18181873",
+                        transform: "scale(1.05)",
+                      }}
+                      transition="all 0.2s ease-in-out"
                     onClick={handleLogout}
                   >
                     Cerrar sesión
@@ -259,14 +266,15 @@ export default function Header() {
           ) : (
             <Link href="/log-in" style={{ textDecoration: "none" }}>
               <Button
-                variant="outline"
+                variant="surface"
                 color="#EDEDED"
-                borderColor="#7D00FF"
-                _hover={{
-                  bgGradient: "linear(to-r, #7D00FF, #9B4DFF)",
-                  transform: "scale(1.05)",
-                }}
-                transition="all 0.2s ease-in-out"
+                bg="blackAlpha.700"
+                borderColor="#000000ff"
+              _hover={{
+                bg:"#18181873",
+                transform: "scale(1.05)",
+              }}
+              transition="all 0.2s ease-in-out"
               >
                 Iniciar Sesión
               </Button>

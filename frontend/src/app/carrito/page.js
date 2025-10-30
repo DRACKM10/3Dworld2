@@ -8,12 +8,12 @@ export default function CartPage() {
 
   return (
     <Box p={4} maxW="1200px" mx="auto" color="white" minH="100vh">
-      <Heading mb={6} textAlign="center">🛒 Tu Carrito de Compras</Heading>
+      <Heading mb={6} textAlign="center"textShadow="0 0 10px #5c212b">🛒 Tu Carrito de Compras</Heading>
       
       {cart.length === 0 ? (
         <Box textAlign="center" py={10}>
           <Text fontSize="xl" mb={4}>Tu carrito está vacío</Text>
-          <Button colorScheme="teal" as="a" href="/">
+          <Button bg="#5c212b" as="a" href="/" color="white" _hover={{bg:"#333333",   transform: "scale(1.02)",}}>
             Seguir Comprando
           </Button>
         </Box>
@@ -26,7 +26,7 @@ export default function CartPage() {
                 p={4} 
                 borderWidth="1px" 
                 borderRadius="md" 
-                bg="gray.800"
+                bg="#292929e0"
                 boxShadow="md"
               >
                 <HStack justify="space-between" align="center">
@@ -62,14 +62,19 @@ export default function CartPage() {
                     </Box>
                   </HStack>
                   
-                  <VStack align="end">
+                  <VStack align="end" >
                     <Text fontWeight="bold" fontSize="lg">
                       ${(item.price * item.quantity).toFixed(2)}
                     </Text>
                     <Button 
                       size="sm" 
-                      colorScheme="red" 
+                      bg="#5c212b"
+                      color="#EDEDED"
                       variant="outline"
+                       _hover={{
+                         bg:"#333333",
+                          transform: "scale(1.02)",}}
+
                       onClick={() => removeFromCart(item.id)}
                     >
                       Eliminar
@@ -81,19 +86,20 @@ export default function CartPage() {
           </VStack>
 
           {/* Resumen y acciones */}
-          <Box p={6} borderWidth="1px" borderRadius="md" bg="gray.800">
+          <Box p={6} borderWidth="1px" borderRadius="md" bg="#292929e0">
             <HStack justify="space-between" mb={4}>
               <Text fontSize="2xl" fontWeight="bold">Total:</Text>
-              <Text fontSize="2xl" fontWeight="bold" color="green.400">
+              <Text fontSize="2xl" fontWeight="bold" color="white">
                 ${getCartTotal().toFixed(2)}
               </Text>
             </HStack>
             
             <HStack spacing={4}>
-              <Button colorScheme="red" variant="outline" onClick={clearCart}>
+              <Button  bg="#5c212b" color="white" variant="surface" onClick={clearCart}
+               _hover={{bg:"#333333",   transform: "scale(1.02)",}} >
                 Limpiar Carrito
               </Button>
-              <Button colorScheme="teal" flex={1} size="lg">
+              <Button bg="#5c212b" color="white" flex={1} size="lg"   _hover={{bg:"#333333",   transform: "scale(1.02)",}} >
                 Proceder al Pago
               </Button>
             </HStack>
