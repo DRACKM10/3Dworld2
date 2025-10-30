@@ -8,6 +8,7 @@ import cartRoutes from "./src/routes/cartRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 import orderRoutes from "./src/routes/orderRoutes.js";
 
+
 dotenv.config();
 const app = express();
 
@@ -30,8 +31,9 @@ verifyConnection();
 // Rutas
 app.use("/api/products", productRoutes);
 app.use("/api/carts", cartRoutes);
-app.use("/api/users", userRoutes);  // <-- Aquí están tus rutas de login/register
+app.use("/api/users", userRoutes);  // ← Aquí están TODAS las rutas de usuarios
 app.use("/api/orders", orderRoutes);
+
 
 app.get("/", (req, res) => {
   res.json({ message: "API de 3Dworld backend funcionando!" });

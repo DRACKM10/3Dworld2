@@ -125,3 +125,15 @@ export const createGoogleUser = async (userData) => {
     throw error;
   }
 };
+export const updateUserPassword = async (userId, hashedPassword) => {
+  try {
+    await pool.query(
+      "UPDATE users SET password = ? WHERE id = ?",
+      [hashedPassword, userId]
+    );
+    console.log('✅ Contraseña actualizada para user_id:', userId);
+  } catch (error) {
+    console.error('❌ Error al actualizar contraseña:', error.message);
+    throw new Error(`Error al actualizar contraseña: ${error.message}`);
+  }
+};

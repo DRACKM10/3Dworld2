@@ -14,8 +14,8 @@ const router = express.Router();
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/google", googleLogin);
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password", resetPassword);
+router.post("/forgot-password", forgotPassword);        // ← Frontend llama a esto
+router.post("/reset-password", resetPassword);          // ← Frontend llama a esto
 router.get("/verify", authenticateToken, verifyToken);
 
 export default router;

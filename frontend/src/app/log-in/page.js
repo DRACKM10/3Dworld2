@@ -9,7 +9,7 @@ import {
   FormLabel,
   FormErrorMessage,
   Text,
-  Link,
+  Link as ChakraLink,
   InputGroup,
   InputRightElement,
   IconButton,
@@ -20,11 +20,10 @@ import {
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../context/authContext";
+import Link from "next/link";
 import { GoogleLogin } from "@react-oauth/google";
 
 export default function LoginPage() {
-  const { login, loading, isAuthenticated } = useAuth();
   const router = useRouter();
   const toast = useToast();
 
@@ -38,48 +37,81 @@ export default function LoginPage() {
 
   const handleTogglePassword = () => setShowPassword(!showPassword);
 
+  // Login normal con email y contraseña
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorEmail("");
     setErrorPassword("");
 
-    if (!email) return setErrorEmail("El correo es obligatorio");
-    if (!password) return setErrorPassword("La contraseña es obligatoria");
+    if (!email) {
+      setErrorEmail("El correo es obligatorio");
+      return;
+    }
+    if (!password) {
+      setErrorPassword("La contraseña es obligatoria");
+      return;
+    }
 
     setIsSubmitting(true);
-    const res = await login(email, password);
-    setIsSubmitting(false);
 
-    if (res.success) {
-      toast({
-        title: "Inicio de sesión exitoso",
-        description: `Bienvenido ${res.user?.name || ""}`,
-        status: "success",
-        duration: 2000,
-        isClosable: true,
+    try {
+      const response = await fetch("http://localhost:8000/api/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (res.user?.name) {
-        localStorage.setItem("usuario", res.user.name);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Error al iniciar sesión");
       }
 
-      router.push("/dashboard");
-    } else {
+      // Guardar datos del usuario
+      if (data.user) {
+        const userName = data.user.username || data.user.name || data.user.email || "Usuario";
+        localStorage.setItem("usuario", userName);
+        
+        if (data.user.id) {
+          localStorage.setItem("userId", data.user.id);
+        }
+      }
+
+      // Guardar token si existe
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
+
       toast({
-        title: "Error al iniciar sesión",
-        description: res.error,
+        title: "✅ Inicio de sesión exitoso",
+        description: `Bienvenido ${data.user?.username || ""}`,
+        status: "success",
+        duration: 2000,
+      });
+
+      setTimeout(() => {
+        router.push("/");
+      }, 1000);
+
+    } catch (error) {
+      console.error("❌ Error en login:", error);
+      toast({
+        title: "❌ Error al iniciar sesión",
+        description: error.message,
         status: "error",
         duration: 3000,
-        isClosable: true,
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  // Login con Google
   const handleGoogleSuccess = async (credentialResponse) => {
     setIsGoogleLoading(true);
     
     try {
-      console.log("🔑 Respuesta de Google recibida:", credentialResponse);
+      console.log("🔑 Token de Google recibido");
       
       const token = credentialResponse.credential;
 
@@ -87,111 +119,51 @@ export default function LoginPage() {
         throw new Error("No se recibió token de Google");
       }
 
-      console.log("🚀 Enviando token al backend...");
-      
-      const res = await fetch("http://localhost:8000/api/users/google", {
+      const response = await fetch("http://localhost:8000/api/users/google", {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          token: token
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
       });
 
-      console.log("📡 Respuesta del servidor - Status:", res.status);
-
-      if (!res.ok) {
-        let errorMessage = `Error HTTP ${res.status}`;
-        try {
-          const errorData = await res.json();
-          errorMessage = errorData.error || errorData.message || errorMessage;
-          console.log("❌ Error del backend:", errorData);
-        } catch {
-          const errorText = await res.text();
-          errorMessage = errorText || errorMessage;
-        }
-        throw new Error(errorMessage);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error con Google Login");
       }
 
-      const data = await res.json();
-      console.log("✅ Datos recibidos del backend:", data);
+      const data = await response.json();
+      console.log("✅ Login con Google exitoso:", data);
 
-      if (data.success) {
-        // 🔥 **CORRECCIÓN PRINCIPAL: Guardar usuario de forma única**
-        if (data.user) {
-          const user = data.user;
-          const userKey = `user_${user.id || user.email}`; // Clave única por usuario
-          const userName = user.username || user.name || user.email || "Usuario";
-          
-          // Guardar información del usuario específico
-          const userProfile = {
-            id: user.id || user.email,
-            name: userName,
-            username: user.username || user.email.split('@')[0],
-            email: user.email,
-            description: user.description || "¡Bienvenido a mi perfil! Estoy emocionado de ser parte de esta comunidad.",
-            birthdate: user.birthdate || "",
-            joinedDate: new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }),
-            following: user.following || 0,
-            followers: user.followers || 0,
-            profilePic: user.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=7D00FF&color=fff&size=128`,
-            banner: user.banner || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=0b2b33&color=7D00FF&size=1200&bold=true`
-          };
-
-          // Guardar con clave única
-          localStorage.setItem("currentUser", userKey);
-          localStorage.setItem(userKey, JSON.stringify(userProfile));
-          
-          // También guardar el nombre para compatibilidad con tu header actual
-          localStorage.setItem("usuario", userName);
-          
-          console.log("👤 Usuario guardado con clave:", userKey);
-          console.log("📝 Datos del usuario:", userProfile);
+      if (data.success && data.user) {
+        const userName = data.user.username || data.user.name || data.user.email || "Usuario";
+        localStorage.setItem("usuario", userName);
+        
+        if (data.user.id) {
+          localStorage.setItem("userId", data.user.id);
         }
 
-        // Guardar token
         if (data.token) {
           localStorage.setItem("token", data.token);
-          console.log("🔐 Token JWT guardado");
         }
 
         toast({
-          title: "¡Inicio de sesión exitoso!",
-          description: `Bienvenido ${data.user?.username || data.user?.name || data.user?.email || ''}`,
+          title: "✅ Inicio de sesión exitoso",
+          description: `Bienvenido ${userName}`,
           status: "success",
           duration: 2000,
-          isClosable: true,
         });
 
-        // Redirigir después de un breve delay
         setTimeout(() => {
-          router.push("/perfil");
+          router.push("/");
         }, 1000);
-        
-      } else {
-        throw new Error(data.error || "Error desconocido del servidor");
       }
 
-    } catch (err) {
-      console.error("❌ Error completo en Google login:", err);
-      
-      let errorMessage = err.message;
-      
-      if (err.message.includes("400")) {
-        errorMessage = "Token de Google inválido o expirado";
-      } else if (err.message.includes("Error con Google Login")) {
-        errorMessage = "El backend no pudo verificar el token de Google";
-      } else if (err.message.includes("Network Error")) {
-        errorMessage = "No se puede conectar con el servidor. Verifica que esté ejecutándose.";
-      }
-      
+    } catch (error) {
+      console.error("❌ Error con Google login:", error);
       toast({
-        title: "Error al iniciar sesión con Google",
-        description: errorMessage,
+        title: "❌ Error al iniciar sesión con Google",
+        description: error.message,
         status: "error",
-        duration: 5000,
-        isClosable: true,
+        duration: 4000,
       });
     } finally {
       setIsGoogleLoading(false);
@@ -200,32 +172,12 @@ export default function LoginPage() {
 
   const handleGoogleError = () => {
     toast({
-      title: "Error de autenticación de Google",
-      description: "No se pudo completar el inicio de sesión con Google",
+      title: "❌ Error de autenticación de Google",
+      description: "No se pudo completar el inicio de sesión",
       status: "error",
       duration: 4000,
-      isClosable: true,
     });
   };
-
-  if (loading) {
-    return (
-      <Box
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        h="100vh"
-        bg="#0F0F0F"
-      >
-        <Spinner size="xl" color="#5c212b" />
-      </Box>
-    );
-  }
-
-  if (isAuthenticated) {
-    router.push("/perfil");
-    return null;
-  }
 
   return (
     <Box
@@ -233,8 +185,8 @@ export default function LoginPage() {
       display="flex"
       alignItems="center"
       justifyContent="center"
-      bgGradient="linear(to-b, #0F0F0F, #2E2E2E)"
-      color="#EDEDED"
+      bg="black"
+      color="white"
     >
       <Box
         bg="rgba(20, 20, 20, 0.85)"
@@ -248,39 +200,37 @@ export default function LoginPage() {
         <Heading
           mb={6}
           textAlign="center"
-          color="#FFFFFFFF"
+          color="white"
           textShadow="0 0 10px #5c212b"
           fontSize="2xl"
-          
         >
           Iniciar Sesión
         </Heading>
 
         <form onSubmit={handleSubmit}>
           <FormControl isInvalid={!!errorEmail} mb={4}>
-            <FormLabel color="#EDEDED" fontSize="sm" fontWeight="medium">
+            <FormLabel color="white" fontSize="sm" fontWeight="medium">
               Correo Electrónico
             </FormLabel>
             <Input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Ingresa tu correo"
+              placeholder="tu@email.com"
               bg="#1A1A1A"
-              color="#EDEDED"
+              color="white"
               _placeholder={{ color: "gray.500" }}
               border="2px solid #333333"
               _focus={{
                 borderColor: "#5c212b",
                 boxShadow: "0 0 10px #5c212b",
               }}
-              required
             />
             {errorEmail && <FormErrorMessage>{errorEmail}</FormErrorMessage>}
           </FormControl>
 
-          <FormControl isInvalid={!!errorPassword} mb={6}>
-            <FormLabel color="#EDEDED" fontSize="sm" fontWeight="medium">
+          <FormControl isInvalid={!!errorPassword} mb={4}>
+            <FormLabel color="white" fontSize="sm" fontWeight="medium">
               Contraseña
             </FormLabel>
             <InputGroup>
@@ -288,46 +238,47 @@ export default function LoginPage() {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Ingresa tu contraseña"
+                placeholder="Tu contraseña"
                 bg="#1A1A1A"
-                color="#EDEDED"
+                color="white"
                 _placeholder={{ color: "gray.500" }}
                 border="2px solid #333333"
                 _focus={{
                   borderColor: "#5c212b",
                   boxShadow: "0 0 10px #5c212b",
                 }}
-                required
                 pr="3.5rem"
               />
               <InputRightElement width="3rem">
                 <IconButton
-                  aria-label={
-                    showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
-                  }
+                  aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                   icon={showPassword ? <ViewOffIcon /> : <ViewIcon />}
                   size="sm"
                   onClick={handleTogglePassword}
                   bg="transparent"
                   color="#5c212b"
-                  _hover={{
-                    bg: "rgba(65, 37, 37, 0.66)",
-                  }}
+                  _hover={{ bg: "rgba(65, 37, 37, 0.66)" }}
                 />
               </InputRightElement>
             </InputGroup>
-            {errorPassword && (
-              <FormErrorMessage>{errorPassword}</FormErrorMessage>
-            )}
+            {errorPassword && <FormErrorMessage>{errorPassword}</FormErrorMessage>}
           </FormControl>
+
+          <Box textAlign="right" mb={4}>
+            <Link href="/forgot-password" passHref>
+              <ChakraLink color="purple.400" fontSize="sm" _hover={{ textDecoration: "underline" }}>
+                ¿Olvidaste tu contraseña?
+              </ChakraLink>
+            </Link>
+          </Box>
 
           <Button
             type="submit"
             width="full"
             bg="#5c212b"
-            color="#EDEDED"
+            color="white"
             _hover={{
-              bg:"#333333",
+              bg: "#333333",
               transform: "scale(1.02)",
             }}
             transition="all 0.2s"
@@ -337,29 +288,19 @@ export default function LoginPage() {
           >
             Iniciar Sesión
           </Button>
-
-          <Text textAlign="center" color="#A0A0A0" mb={6} fontSize="sm">
-            <Link
-              href="/reset-password"
-              color="white"
-              _hover={{ textDecoration: "underline" }}
-            >
-              ¿Olvidaste tu contraseña?
-            </Link>
-          </Text>
         </form>
 
         <Divider my={6} borderColor="#333333" />
 
-        {/* Google Login Button */}
+        {/* Google Login */}
         <Box mb={4}>
-          <Text textAlign="center" color="#cccbcbff" fontSize="sm" mb={3}>
+          <Text textAlign="center" color="gray.400" fontSize="sm" mb={3}>
             O continúa con
           </Text>
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={handleGoogleError}
-            theme="filled_white"
+            theme="filled_black"
             size="large"
             width="100%"
             text="continue_with"
@@ -367,7 +308,7 @@ export default function LoginPage() {
           />
           {isGoogleLoading && (
             <Box textAlign="center" mt={2}>
-              <Spinner size="sm" color="#7D00FF" />
+              <Spinner size="sm" color="#5c212b" />
               <Text fontSize="xs" color="gray.500" mt={1}>
                 Verificando con Google...
               </Text>
@@ -375,14 +316,12 @@ export default function LoginPage() {
           )}
         </Box>
 
-        <Text textAlign="center" color="#d4d4d4ff" fontSize="sm">
+        <Text textAlign="center" color="gray.400" fontSize="sm">
           ¿No tienes cuenta?{" "}
-          <Link
-            href="/registro"
-            color="#ad3e50ff"
-            _hover={{ textDecoration: "underline" }}
-          >
-            Regístrate aquí
+          <Link href="/registro" passHref>
+            <ChakraLink color="#5c212b" _hover={{ textDecoration: "underline" }}>
+              Regístrate aquí
+            </ChakraLink>
           </Link>
         </Text>
       </Box>
