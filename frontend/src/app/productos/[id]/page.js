@@ -41,7 +41,7 @@ export default function ProductPage() {
         setLoading(false);
       }
     }
-    fetchProduct();
+      fetchProduct();
   }, [id]);
 
   if (loading) return <Text color="white">Cargando...</Text>;

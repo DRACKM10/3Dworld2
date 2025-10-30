@@ -6,26 +6,29 @@ import path from 'path';
 // Ruta del archivo de datos persistentes
 const DATA_FILE = path.join(process.cwd(), 'data', 'products.json');
 
-// Función para cargar productos desde el archivo JSON
 async function loadProducts() {
   try {
     const data = await fs.readFile(DATA_FILE, 'utf8');
-    return JSON.parse(data);
+    const products = JSON.parse(data);
+    console.log('Productos cargados desde archivo:', products); // Depuración
+    return products;
   } catch (error) {
+    console.error('Error al cargar productos:', error);
     await saveProducts([]);
     return [];
   }
 }
 
-// Función para guardar productos en el archivo JSON
 async function saveProducts(products) {
   const dir = path.dirname(DATA_FILE);
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(DATA_FILE, JSON.stringify(products, null, 2));
+  console.log('Productos guardados en archivo:', products); // Depuración
 }
 
 export async function GET() {
   const products = await loadProducts();
+  console.log('Productos enviados en GET:', products); // Depuración
   return NextResponse.json(products);
 }
 
@@ -127,42 +130,5 @@ export async function PUT(request) {
       await fs.writeFile(fileFullPath, buffer);
       newFile = {
         name: file.name,
-        size: buffer.length / 1024, // Tamaño en KB
-        date: new Date().toISOString(),
-        url: `/files/${fileName}`,
-      };
-      products[productIndex].files.push(newFile);
-    } catch (error) {
-      console.error(`Error al guardar el archivo:`, error);
-      return NextResponse.json({ error: `Fallo al guardar el archivo: ${error.message}` }, { status: 500 });
-    }
-  }
-
-  if (comment) {
-    const newComment = {
-      user: 'User', // Reemplazar con usuario real si hay autenticación
-      date: new Date().toISOString(),
-      content: comment,
-      replies: [],
-    };
-    if (replyTo) {
-      const commentIndex = parseInt(replyTo, 10);
-      if (products[productIndex].comments[commentIndex]) {
-        products[productIndex].comments[commentIndex].replies.push(newComment);
-      }
-    } else {
-      products[productIndex].comments.push(newComment);
-    }
-  }
-
-  products[productIndex] = {
-    ...products[productIndex],
-    summary: summary || products[productIndex].summary,
-    printSettings: printSettings || products[productIndex].printSettings,
-    videoLink: videoLink || products[productIndex].videoLink,
-    pdf: pdfPath,
-  };
-
-  await saveProducts(products);
-  return NextResponse.json(products[productIndex], { status: 200 });
-}
+        size: buffer.length / 1024,
+        date:
