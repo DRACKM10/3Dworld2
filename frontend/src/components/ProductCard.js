@@ -1,23 +1,56 @@
 "use client";
 
 import { useCart } from '../context/CartContext';
-import { Box, Image, Button, Text, VStack } from '@chakra-ui/react';
-import Link from 'next/link';
+import { Box, Image, Button, Text, VStack, HStack, IconButton, useToast } from '@chakra-ui/react';
+import { EditIcon, DeleteIcon } from '@chakra-ui/icons';
+import { useRouter } from 'next/navigation';
 
-export default function ProductCard({ product }) {
-  console.log('Renderizando ProductCard con:', product);
+export default function ProductCard({ product, onEdit, onDelete }) {
   const { addToCart } = useCart();
   const router = useRouter();
   const toast = useToast();
 
   const handleAddToCart = (e) => {
     e.stopPropagation();
-    console.log('Añadiendo al carrito:', product);
     addToCart(product);
   };
 
-  const href = `/productos/${product?.id || 'default'}`;
-  console.log('Generando href:', href);
+  const handleProductClick = () => {
+    router.push(`/productos/${product.id}`);
+  };
+
+  const handleEdit = (e) => {
+    e.stopPropagation();
+    onEdit(product);
+  };
+
+  const handleDelete = async (e) => {
+    e.stopPropagation();
+    
+    if (!confirm(`¿Eliminar "${product.name}"?`)) return;
+
+    try {
+      const response = await fetch(`http://localhost:8000/api/products/${product.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Error al eliminar');
+
+      toast({
+        title: '✅ Producto eliminado',
+        status: 'success',
+        duration: 2000,
+      });
+
+      onDelete(product.id);
+    } catch (error) {
+      toast({
+        title: '❌ Error al eliminar',
+        description: error.message,
+        status: 'error',
+      });
+    }
+  };
 
   return (
     <Box
@@ -36,35 +69,55 @@ export default function ProductCard({ product }) {
       }}
       onClick={handleProductClick}
     >
-      <Link href={href} passHref>
-        <div style={{ cursor: 'pointer', padding: '4px' }}>
-          <Image 
-            src={product.image} 
-            alt={product.name}
-            height="200px"
-            width="100%"
-            objectFit="cover"
-            mb={4}
-            borderRadius="md"
-          />
-          
-          <VStack align="start" spacing={2}>
-            <Text fontWeight="bold" fontSize="lg" noOfLines={1}>{product.name}</Text>
-            <Text color="gray.600" fontSize="sm" noOfLines={2}>{product.description}</Text>
-            <Text fontWeight="bold" color="blue.600" fontSize="xl">${product.price}</Text>
-          </VStack>
-        </div>
-      </Link>
-      
-      <Button 
-        colorScheme="teal" 
+      {/* Botones de editar/eliminar */}
+      <HStack position="absolute" top={2} right={2} spacing={1} zIndex={10}>
+        <IconButton
+          icon={<EditIcon />}
+          size="sm"
+          colorScheme="blue"
+          onClick={handleEdit}
+          aria-label="Editar"
+        />
+        <IconButton
+          icon={<DeleteIcon />}
+          size="sm"
+          colorScheme="red"
+          onClick={handleDelete}
+          aria-label="Eliminar"
+        />
+      </HStack>
+
+      <Image
+        src={product.image}
+        alt={product.name}
+        height="200px"
         width="100%"
-        onClick={handleAddToCart}
-        size="lg"
-        mt={2}
-      >
-        🛒 Agregar al Carrito
-      </Button>
+        objectFit="contain"
+        mb={4}
+        borderRadius="md"
+      />
+      <VStack align="start" spacing={2}>
+        <Text fontWeight="bold" fontSize="lg" noOfLines={1} color="white">
+          {product.name}
+        </Text>
+        <Text color="white" fontSize="sm" noOfLines={2}>
+          {product.description}
+        </Text>
+        <Text fontWeight="bold" color="#a3aaffff" fontSize="xl">
+          ${product.price}
+        </Text>
+        <Button
+          colorScheme="teal"
+          width="100%"
+          onClick={handleAddToCart}
+          size="lg"
+          color="white" 
+          bg="#5c212b"  
+          _hover={{ bg:"#6d6c6c73", transform: "scale(1.05)"}}
+        >
+          🛒 Agregar al Carrito
+        </Button>
+      </VStack>
     </Box>
   );
 }
