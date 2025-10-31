@@ -87,15 +87,14 @@ export default function ResetPassword() {
       if (!response.ok) throw new Error(data.error);
 
       toast({
-        title: "✅ Contraseña actualizada",
-        description: "Ya puedes iniciar sesión con tu nueva contraseña",
-        status: "success",
-      });
+  title: "✅ Contraseña actualizada",
+  description: "Ya puedes iniciar sesión con tu nueva contraseña",
+  status: "success",
+});
 
-      setTimeout(() => {
-        router.push("/login");
-      }, 2000);
-
+setTimeout(() => {
+  router.push("/");  // ← Esto lo lleva al home
+}, 2000);
     } catch (error) {
       toast({
         title: "❌ Error",
