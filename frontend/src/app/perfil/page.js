@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Flex,
@@ -28,85 +29,139 @@ import {
 } from "@chakra-ui/react";
 
 export default function Perfil() {
+  const router = useRouter();
   const [user, setUser] = useState(null);
   const [editUser, setEditUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [uploadingProfile, setUploadingProfile] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
 
   useEffect(() => {
-    const loadUserData = () => {
+    const loadUserData = async () => {
       try {
-        // 1. Obtener la clave del usuario actual
-        const userKey = localStorage.getItem("currentUser");
-        
-        if (!userKey) {
-          // Si no hay usuario logueado, redirigir al login
-          window.location.href = '/log-in';
+        const userId = localStorage.getItem("userId");
+        const token = localStorage.getItem("token");
+
+        if (!userId || !token) {
+          console.log('❌ No hay sesión, redirigiendo...');
+          router.push('/login');
           return;
         }
 
-        // 2. Cargar datos del usuario específico
-        let storedUser = localStorage.getItem(userKey);
-        
-        if (!storedUser) {
-          // Si no existe, crear usuario por defecto para este usuario
-          const userEmail = userKey.replace('user_', '');
-          const defaultUser = {
-            id: userKey,
-            name: userEmail.split('@')[0], // Usar parte del email como nombre
-            username: userEmail.split('@')[0],
-            email: userEmail,
-            description: "¡Bienvenido a mi perfil! Estoy emocionado de ser parte de esta comunidad.",
-            birthdate: "",
-            joinedDate: new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }),
-            following: 0,
-            followers: 0,
-            profilePic: `https://ui-avatars.com/api/?name=${encodeURIComponent(userEmail.split('@')[0])}&background=7D00FF&color=fff&size=128`,
-            banner: `https://ui-avatars.com/api/?name=${encodeURIComponent(userEmail.split('@')[0])}&background=0b2b33&color=7D00FF&size=1200&bold=true`
-          };
-          localStorage.setItem(userKey, JSON.stringify(defaultUser));
-          storedUser = JSON.stringify(defaultUser);
+        console.log('📋 Cargando perfil para userId:', userId);
+
+        // Obtener perfil desde el backend
+        const response = await fetch(`http://localhost:8000/api/profiles/${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Error al cargar perfil');
         }
 
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        setEditUser(parsedUser);
+        const data = await response.json();
+        console.log('✅ Perfil cargado:', data.profile);
+
+        const profile = {
+          id: data.profile.user_id,
+          name: data.profile.name,
+          username: data.profile.username,
+          email: localStorage.getItem("usuario") || "",
+          description: data.profile.description,
+          birthdate: data.profile.birthdate || "",
+          joinedDate: new Date(data.profile.created_at).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }),
+          following: data.profile.following || 0,
+          followers: data.profile.followers || 0,
+          profilePic: data.profile.profile_pic,
+          banner: data.profile.banner
+        };
+
+        setUser(profile);
+        setEditUser(profile);
+        
       } catch (error) {
-        console.error("Error loading user:", error);
+        console.error("❌ Error loading user:", error);
         toast({
           title: "Error",
           description: "No se pudo cargar la información del usuario",
           status: "error",
           duration: 3000,
         });
+        router.push('/login');
       } finally {
         setLoading(false);
       }
     };
 
     loadUserData();
-  }, [toast]);
+  }, [toast, router]);
 
   const handleChange = (e) => {
     setEditUser({ ...editUser, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (e, field) => {
+  const handleFileChange = async (e, field) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setEditUser({ ...editUser, [field]: ev.target.result });
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const isProfile = field === 'profilePic';
+    const setUploading = isProfile ? setUploadingProfile : setUploadingBanner;
+
+    try {
+      setUploading(true);
+      
+      toast({
+        title: "Subiendo imagen...",
+        status: "info",
+        duration: 2000,
+      });
+
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('type', isProfile ? 'profile' : 'banner');
+      formData.append('userId', user.id);
+
+      const response = await fetch('http://localhost:8000/api/profiles/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Error al subir imagen');
+
+      const data = await response.json();
+      console.log('✅ Imagen subida:', data.imageUrl);
+
+      setEditUser({ ...editUser, [field]: data.imageUrl });
+
+      toast({
+        title: "✅ Imagen subida",
+        status: "success",
+        duration: 2000,
+      });
+
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "❌ Error",
+        description: "No se pudo subir la imagen",
+        status: "error",
+        duration: 3000,
+      });
+    } finally {
+      setUploading(false);
     }
   };
 
-  const saveUser = () => {
+  const saveUser = async () => {
     try {
-      const userKey = localStorage.getItem("currentUser");
-      if (!userKey) {
+      const userId = localStorage.getItem("userId");
+      const token = localStorage.getItem("token");
+
+      if (!userId) {
         toast({
           title: "Error",
           description: "No se encontró el usuario actual",
@@ -116,16 +171,39 @@ export default function Perfil() {
         return;
       }
 
-      localStorage.setItem(userKey, JSON.stringify(editUser));
+      // Guardar en el backend
+      const response = await fetch('http://localhost:8000/api/profiles', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId,
+          name: editUser.name,
+          username: editUser.username,
+          description: editUser.description,
+          birthdate: editUser.birthdate,
+          profile_pic: editUser.profilePic,
+          banner: editUser.banner
+        }),
+      });
+
+      if (!response.ok) throw new Error('Error al guardar perfil');
+
+      const data = await response.json();
+      console.log('✅ Perfil guardado:', data.profile);
+
       setUser(editUser);
       onClose();
       
       toast({
-        title: "Perfil actualizado",
+        title: "✅ Perfil actualizado",
         description: "Tus cambios se guardaron correctamente",
         status: "success",
         duration: 2000,
       });
+
     } catch (error) {
       console.error("Error saving user:", error);
       toast({
@@ -143,9 +221,8 @@ export default function Perfil() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("token");
-    window.location.href = '/';
+    localStorage.clear();
+    router.push('/');
   };
 
   if (loading) {
@@ -163,7 +240,7 @@ export default function Perfil() {
           <Text color="white">No se pudo cargar el perfil</Text>
           <Button 
             colorScheme="purple"
-            onClick={() => window.location.href = '/log-in'}
+            onClick={() => router.push('/login')}
           >
             Ir al Login
           </Button>
@@ -198,11 +275,6 @@ export default function Perfil() {
             width="100%"
             height="100%"
             objectFit="cover"
-            onError={(e) => {
-              const userKey = localStorage.getItem("currentUser");
-              const userName = userKey ? userKey.replace('user_', '').split('@')[0] : 'Usuario';
-              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=0b2b33&color=7D00FF&size=1200`;
-            }}
           />
         </Box>
 
@@ -214,7 +286,6 @@ export default function Perfil() {
             align={{ base: "center", lg: "flex-start" }}
             justify="space-between"
           >
-            {/* Columna Izquierda - Avatar e Información */}
             <Flex 
               direction="column" 
               align={{ base: "center", lg: "flex-start" }}
@@ -266,7 +337,6 @@ export default function Perfil() {
               </VStack>
             </Flex>
 
-            {/* Columna Derecha - Botones */}
             <VStack spacing={3}>
               <Button 
                 variant="surface" 
@@ -281,12 +351,22 @@ export default function Perfil() {
                 Editar perfil
               </Button>
               
+              <Button 
+                variant="outline" 
+                colorScheme="red"
+                onClick={handleLogout}
+                size="md"
+                borderRadius="full"
+                width="full"
+              >
+                Cerrar sesión
+              </Button>
             </VStack>
           </Flex>
         </Box>
       </Box>
 
-      {/* Modal de Edición (se mantiene igual) */}
+      {/* Modal de Edición */}
       <Modal 
         isOpen={isOpen} 
         onClose={cancelEdit} 
@@ -351,7 +431,9 @@ export default function Perfil() {
                   accept="image/*" 
                   onChange={(e) => handleFileChange(e, "profilePic")}
                   border="none"
+                  isDisabled={uploadingProfile}
                 />
+                {uploadingProfile && <Text fontSize="sm" color="blue.400">Subiendo...</Text>}
               </FormControl>
               
               <FormControl>
@@ -361,7 +443,9 @@ export default function Perfil() {
                   accept="image/*" 
                   onChange={(e) => handleFileChange(e, "banner")}
                   border="none"
+                  isDisabled={uploadingBanner}
                 />
+                {uploadingBanner && <Text fontSize="sm" color="blue.400">Subiendo...</Text>}
               </FormControl>
             </VStack>
           </ModalBody>

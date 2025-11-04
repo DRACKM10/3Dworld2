@@ -83,15 +83,15 @@ export default function LoginPage() {
       }
 
       toast({
-        title: "✅ Inicio de sesión exitoso",
-        description: `Bienvenido ${data.user?.username || ""}`,
-        status: "success",
-        duration: 2000,
-      });
+  title: "✅ Inicio de sesión exitoso",
+  description: `Bienvenido ${data.user?.username || ""}`,
+  status: "success",
+  duration: 2000,
+});
 
-      setTimeout(() => {
-        router.push("/");
-      }, 1000);
+setTimeout(() => {
+  router.push("/");  // ← Cambiar de "/dashboard" o "/perfil" a "/"
+}, 1000);
 
     } catch (error) {
       console.error("❌ Error en login:", error);
@@ -146,15 +146,15 @@ export default function LoginPage() {
         }
 
         toast({
-          title: "✅ Inicio de sesión exitoso",
-          description: `Bienvenido ${userName}`,
-          status: "success",
-          duration: 2000,
-        });
+  title: "✅ Inicio de sesión exitoso",
+  description: `Bienvenido ${userName}`,
+  status: "success",
+  duration: 2000,
+});
 
-        setTimeout(() => {
-          router.push("/");
-        }, 1000);
+setTimeout(() => {
+  router.push("/");  // ← Cambiar de "/perfil" a "/"
+}, 1000);
       }
 
     } catch (error) {
