@@ -250,7 +250,7 @@ export default function Perfil() {
   }
 
   return (
-    <Box bg="#121212" minH="100vh" py={8}>
+    <Box  minH="100vh" py={8}>
       {/* Container Principal */}
       <Box 
         maxW="1200px" 
@@ -258,7 +258,7 @@ export default function Perfil() {
         px={{ base: 4, md: 6 }}
         border="1px solid #5c212b"
         borderRadius="16px"
-        bg="black"
+        bg="#1a1a1ade"
         overflow="hidden"
       >
         {/* Banner */}
@@ -268,6 +268,7 @@ export default function Perfil() {
           width="100%"
           overflow="hidden" 
           paddingTop="1px"
+         
         >
           <Image 
             src={user.banner} 
@@ -373,7 +374,7 @@ export default function Perfil() {
         size={{ base: "full", md: "2xl" }}
       >
         <ModalOverlay bg="blackAlpha.600" />
-        <ModalContent bg="gray.800" color="white" borderRadius="xl">
+        <ModalContent bg="rgba(20, 20, 20, 0.95 )" color="white" borderRadius="xl">
           <ModalHeader borderBottom="1px solid" borderColor="gray.600">
             Editar Perfil
           </ModalHeader>
@@ -451,10 +452,10 @@ export default function Perfil() {
           </ModalBody>
           
           <ModalFooter borderTop="1px solid" borderColor="gray.600">
-            <Button variant="outline" onClick={cancelEdit} mr={3}>
+            <Button variant="outline" bg="white" onClick={cancelEdit} mr={3}>
               Cancelar
             </Button>
-            <Button colorScheme="purple" onClick={saveUser}>
+            <Button bg="#5c212b" color="white" onClick={saveUser}>
               Guardar
             </Button>
           </ModalFooter>

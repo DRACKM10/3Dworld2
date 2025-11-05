@@ -55,10 +55,10 @@ export default function ProductPage() {
   );
 
   return (
-    <Box p={4} maxW="1200px" mx="auto" mt={4} bg="black" minH="100vh">
+    <Box p={4} maxW="1200px" mx="auto" mt={4}  minH="100vh">
       <Flex direction={{ base: "column", md: "row" }} gap={6}>
         {/* Imagen principal */}
-        <Box flex={1} position="relative" height={{ base: "300px", md: "500px" }} borderRadius="8px" overflow="hidden" bg="gray.900">
+        <Box flex={1} position="relative" height={{ base: "300px", md: "500px" }} borderRadius="8px" overflow="hidden" bg="#1a1a1a8a">
           <Image
             src={product.image}
             alt={product.name || 'Producto'}
@@ -101,10 +101,12 @@ export default function ProductPage() {
 
           <VStack spacing={3} align="stretch">
             <Button
-              colorScheme="purple"
+              bg="#5c212b"
               size="lg"
               width="100%"
+              color="white"
               onClick={() => {
+
                 toast({
                   title: "Agregado al carrito",
                   description: `${product.name} agregado exitosamente`,
@@ -119,7 +121,7 @@ export default function ProductPage() {
 
             <Button
               variant="outline"
-              colorScheme="blue"
+              bg="white"
               size="lg"
               width="100%"
               onClick={() => router.push('/productos')}

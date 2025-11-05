@@ -70,16 +70,16 @@ export default function ForgotPassword() {
       display="flex"
       alignItems="center"
       justifyContent="center"
-      bg="black"
+      
       p={4}
     >
       <Box
         maxW="400px"
         w="100%"
-        bg="gray.900"
+        bg="rgba(20, 20, 20, 0.85)"
         p={8}
         borderRadius="lg"
-        boxShadow="xl"
+        boxShadow="0 0 20px #5c212b"
       >
         <Heading color="white" mb={6} textAlign="center">
           ¿Olvidaste tu contraseña?
@@ -99,24 +99,36 @@ export default function ForgotPassword() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="tu@email.com"
-                  bg="gray.800"
+                  bg="#1A1A1A"
+                  _placeholder={{ color: "gray.500" }}
                   color="white"
-                  border="1px solid"
-                  borderColor="gray.600"
+                  border="2px solid #333333"
+                  _focus={{
+                      borderColor: "#5c212b",
+                      oxShadow: "0 0 10px #5c212b",
+                   }}
                 />
               </FormControl>
 
               <Button
                 type="submit"
-                colorScheme="purple"
+                color="white"
+                bg="#5c212b"
                 width="100%"
                 isLoading={isLoading}
+                _hover={{
+                  bg: "#333333",
+                  transform: "scale(1.02)",
+                }}    
+                transition="all 0.2s"
+                mb={4}
+                loadingText="Enviando..."
               >
                 Enviar instrucciones
               </Button>
 
               <Link href="/login" passHref>
-                <ChakraLink color="purple.400" fontSize="sm">
+                <ChakraLink color="#5c212b" fontSize="sm">
                   Volver al login
                 </ChakraLink>
               </Link>
@@ -131,7 +143,7 @@ export default function ForgotPassword() {
               Revisa tu bandeja de entrada y carpeta de spam
             </Text>
             <Link href="/login" passHref>
-              <ChakraLink color="purple.400">
+              <ChakraLink color="#5c212b" fontSize="sm">
                 Volver al login
               </ChakraLink>
             </Link>

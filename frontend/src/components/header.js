@@ -113,7 +113,7 @@ export default function Header() {
     <Box
       as="header"
       p={4}
-      bgGradient="linear(to-r, #5c212b, #5c212b)"
+      bgGradient="linear(to-r, #5c212bff, #5c212b )"
       color="#EDEDED"
       boxShadow="md"
       position="sticky"
@@ -121,14 +121,15 @@ export default function Header() {
       zIndex={1000}
     >
       <Flex
-        maxW="1200px"
-        mx="auto"
+        w="100%"
+        px={{ base: 4, md: 8 }}
         justify="space-between"
         align="center"
         flexWrap="wrap"
         gap={3}
       >
-        {/* 🔹 Logo */}
+        {/* 🔹 Logo */} 
+       
         <Link href="/" style={{ textDecoration: "none" }}>
           <Heading
             size="md"
@@ -139,11 +140,13 @@ export default function Header() {
             3DWORLD
           </Heading>
         </Link>
+       
 
         {/* 🔹 Buscador */}
         <Input
           placeholder="Buscar productos"
-          maxW="400px"
+          flex="1"
+          maxW={{ base: "100%", md: "600px" }}
           bg="white"
           color="black"
           borderRadius="lg"

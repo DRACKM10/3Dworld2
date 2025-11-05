@@ -185,7 +185,7 @@ setTimeout(() => {
       display="flex"
       alignItems="center"
       justifyContent="center"
-      bg="black"
+       
       color="white"
     >
       <Box
@@ -266,7 +266,7 @@ setTimeout(() => {
 
           <Box textAlign="right" mb={4}>
             <Link href="/forgot-password" passHref>
-              <ChakraLink color="purple.400" fontSize="sm" _hover={{ textDecoration: "underline" }}>
+              <ChakraLink color="#5c212b" fontSize="sm" _hover={{ textDecoration: "underline" }}>
                 ¿Olvidaste tu contraseña?
               </ChakraLink>
             </Link>

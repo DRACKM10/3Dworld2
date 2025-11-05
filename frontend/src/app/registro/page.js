@@ -93,7 +93,7 @@ export default function RegisterPage() {
       display="flex"
       alignItems="center"
       justifyContent="center"
-      bgGradient="linear(to-b, #0F0F0F, #2E2E2E)"
+      
       color="#EDEDED"
     >
       <Box

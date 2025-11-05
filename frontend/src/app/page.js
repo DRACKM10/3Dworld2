@@ -27,7 +27,6 @@ export default function Home() {
   return (
     <Box
       p={4}
-      bg="black"
       maxW="1200px"
       mx="auto"
       position="relative"

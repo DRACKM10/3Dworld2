@@ -112,13 +112,13 @@ setTimeout(() => {
       display="flex"
       alignItems="center"
       justifyContent="center"
-      bg="black"
+      
       p={4}
     >
       <Box
         maxW="400px"
         w="100%"
-        bg="gray.900"
+        bg="rgba(20, 20, 20, 0.85)"
         p={8}
         borderRadius="lg"
         boxShadow="xl"
@@ -137,10 +137,14 @@ setTimeout(() => {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Mínimo 6 caracteres"
-                  bg="gray.800"
+                  bg="#1a1a1a"
                   color="white"
-                  border="1px solid"
-                  borderColor="gray.600"
+                  _placeholder={{ color: "gray.500" }}
+                  border="2px solid #333333"
+                  _focus={{
+                      borderColor: "#5c212b",
+                      boxShadow: "0 0 10px #5c212b",
+                    }}
                 />
                 <InputRightElement>
                   <IconButton
@@ -161,10 +165,15 @@ setTimeout(() => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Repite tu contraseña"
-                bg="gray.800"
-                color="white"
-                border="1px solid"
-                borderColor="gray.600"
+                bg="#1a1a1a"
+                  color="white"
+                  _placeholder={{ color: "gray.500" }}
+                  border="2px solid #333333"
+                  _focus={{
+                      borderColor: "#5c212b",
+                      boxShadow: "0 0 10px #5c212b",
+                    }}
+               
               />
             </FormControl>
 

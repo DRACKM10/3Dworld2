@@ -106,7 +106,7 @@ export default function Products() {
       maxW="1200px"
       mx="auto"
       minHeight="100vh"
-      bg="black"
+       
     >
       <Flex justify="space-between" align="center" mb={6} flexWrap="wrap" gap={4}>
         <Heading

@@ -58,7 +58,7 @@ export default function ProductCard({ product, onEdit, onDelete }) {
       borderRadius="lg"
       overflow="hidden"
       p={4}
-      bg="#5c212b1c"
+      bg="#1818189f"
       boxShadow="md"
       position="relative"
       _hover={{
