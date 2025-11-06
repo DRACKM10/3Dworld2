@@ -16,6 +16,7 @@ import {
   VStack,
   Box,
   Image,
+  Text,
 } from '@chakra-ui/react';
 import { useState, useEffect } from 'react';
 
@@ -30,6 +31,12 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
   const [image, setImage] = useState(null);
   const [previewImage, setPreviewImage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Estados para archivos STL
+  const [stlFile, setStlFile] = useState(null);
+  const [uploadingSTL, setUploadingSTL] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  
   const toast = useToast();
 
   // Cargar datos si es edición
@@ -48,6 +55,7 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
       setFormData({ name: '', description: '', price: '', category: '', stock: '' });
       setImage(null);
       setPreviewImage('');
+      setUploadedFiles([]);
     }
   }, [editProduct, isOpen]);
 
@@ -74,6 +82,48 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
     }
   };
 
+  // Función para subir archivos STL
+  const handleSTLUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingSTL(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('stl', file);
+      formData.append('productId', editProduct?.id || 'temp');
+
+      const response = await fetch('http://localhost:8000/api/products/upload-stl', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Error al subir archivo');
+
+      const data = await response.json();
+      
+      setUploadedFiles([...uploadedFiles, data.file]);
+
+      toast({
+        title: "✅ Archivo subido",
+        description: `${file.name} subido correctamente`,
+        status: "success",
+        duration: 2000,
+      });
+
+    } catch (error) {
+      toast({
+        title: "❌ Error",
+        description: error.message,
+        status: "error",
+        duration: 3000,
+      });
+    } finally {
+      setUploadingSTL(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -86,7 +136,6 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
       return;
     }
 
-    // Si es edición y no hay nueva imagen, requerir imagen existente
     if (!editProduct && !image) {
       toast({
         title: 'Error',
@@ -143,6 +192,7 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
       setFormData({ name: '', description: '', price: '', category: '', stock: '' });
       setImage(null);
       setPreviewImage('');
+      setUploadedFiles([]);
       onClose();
       
     } catch (error) {
@@ -157,13 +207,13 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl" >
+    <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>{editProduct ? 'Editar' : 'Agregar'} Producto</ModalHeader>
         <ModalCloseButton />
         <form onSubmit={handleSubmit}>
-          <ModalBody >
+          <ModalBody>
             <VStack spacing={4}>
               <FormControl isRequired>
                 <FormLabel>Nombre</FormLabel>
@@ -203,12 +253,42 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
                   </Box>
                 </Box>
               )}
+
+              {/* Input para archivos 3D */}
+              <FormControl>
+                <FormLabel>Archivo 3D (STL, OBJ, GCODE)</FormLabel>
+                <Input 
+                  type="file" 
+                  accept=".stl,.obj,.gcode"
+                  onChange={handleSTLUpload}
+                  variant="surface"
+                  isDisabled={uploadingSTL}
+                />
+                {uploadingSTL && <Text fontSize="sm" color="blue.400">Subiendo archivo...</Text>}
+              </FormControl>
+
+              {/* Mostrar archivos subidos */}
+              {uploadedFiles.length > 0 && (
+                <Box width="100%">
+                  <Text fontWeight="bold" mb={2}>Archivos subidos:</Text>
+                  <VStack align="stretch" spacing={2}>
+                    {uploadedFiles.map((file, index) => (
+                      <Box key={index} p={2} bg="gray.700" borderRadius="md">
+                        <Text fontSize="sm">📁 {file.name}</Text>
+                        <Text fontSize="xs" color="gray.400">{file.type} - {file.size} MB</Text>
+                      </Box>
+                    ))}
+                  </VStack>
+                </Box>
+              )}
             </VStack>
           </ModalBody>
 
           <ModalFooter>
-            <Button bg="#646464ff" _hover={{bg: "#a1a1a1ff",}} variant="outline" mr={3} onClick={onClose}>Cancelar</Button>
-            <Button bg="#5c212b" color="white" type="submit" isLoading={isLoading} _hover={{bg: "#333333",}}>
+            <Button bg="#646464ff" _hover={{bg: "#a1a1a1ff"}} variant="outline" mr={3} onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button bg="#5c212b" color="white" type="submit" isLoading={isLoading} _hover={{bg: "#333333"}}>
               {editProduct ? 'Actualizar' : 'Crear'} Producto
             </Button>
           </ModalFooter>

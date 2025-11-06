@@ -1,4 +1,3 @@
-// routes/productRoutes.js
 import express from 'express';
 import { 
   getProducts, 
@@ -6,6 +5,7 @@ import {
   addProduct,
   updateProduct,
   deleteProduct,
+  uploadSTLFile, // ← NUEVO
   upload 
 } from '../controllers/productController.js';
 
@@ -14,7 +14,8 @@ const router = express.Router();
 router.get('/', getProducts);
 router.get('/:id', getProduct);
 router.post('/', upload.single('image'), addProduct);
-router.put('/:id', upload.single('image'), updateProduct); // ← NUEVO
-router.delete('/:id', deleteProduct); // ← NUEVO
+router.put('/:id', upload.single('image'), updateProduct);
+router.delete('/:id', deleteProduct);
+router.post('/upload-stl', upload.single('stl'), uploadSTLFile); // ← NUEVO
 
 export default router;

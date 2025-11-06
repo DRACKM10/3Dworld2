@@ -3,26 +3,41 @@ import {
   getAllProducts, 
   getProductById, 
   createProduct,
-  updateProductById,  // ← AGREGAR
-  deleteProductById   // ← AGREGAR
+  updateProductById,
+  deleteProductById
 } from "../models/productModel.js";
 import { supabase, BUCKET_NAME } from "../config/supabase.js";
 import multer from 'multer';
 
-// Configurar Multer para memoria (no guardamos en disco)
+// ✅ Configurar Multer para permitir imágenes y modelos 3D
 const storage = multer.memoryStorage();
-export const upload = multer({ 
+
+export const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB máximo
+  limits: { fileSize: 10 * 1024 * 1024 }, // hasta 10MB
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    const allowedMimeTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/jpg",
+      "model/stl",
+      "model/obj",
+      "application/octet-stream", // algunos navegadores envían STL así
+      "text/plain",               // algunos OBJ o GCODE pueden venir así
+      "application/vnd.ms-pki.stl"
+    ];
+
+    if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Solo se permiten imágenes'));
+      cb(new Error("Solo se permiten imágenes o archivos STL/OBJ/GCODE"));
     }
   }
 });
 
+
+// ✅ Obtener todos los productos
 export const getProducts = async (req, res) => {
   try {
     const products = await getAllProducts();
@@ -33,6 +48,8 @@ export const getProducts = async (req, res) => {
   }
 };
 
+
+// ✅ Obtener producto por ID
 export const getProduct = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -51,12 +68,14 @@ export const getProduct = async (req, res) => {
   }
 };
 
+
+// ✅ Agregar nuevo producto
 export const addProduct = async (req, res) => {
   console.log('📤 Subiendo producto a Supabase...');
   
   try {
     if (!req.file) {
-      return res.status(400).json({ error: "La imagen es requerida" });
+      return res.status(400).json({ error: "La imagen o modelo es requerida" });
     }
 
     const { name, description, price, category, stock } = req.body;
@@ -65,13 +84,11 @@ export const addProduct = async (req, res) => {
       return res.status(400).json({ error: "Nombre y precio son requeridos" });
     }
 
-    // Generar nombre único para la imagen
     const fileExt = req.file.originalname.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-    console.log('☁️ Subiendo imagen a Supabase:', fileName);
+    console.log('☁️ Subiendo archivo a Supabase:', fileName);
 
-    // Subir a Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(fileName, req.file.buffer, {
@@ -80,32 +97,27 @@ export const addProduct = async (req, res) => {
       });
 
     if (uploadError) {
-      console.error('❌ Error al subir imagen:', uploadError);
-      return res.status(500).json({ error: "Error al subir la imagen: " + uploadError.message });
+      console.error('❌ Error al subir archivo:', uploadError);
+      return res.status(500).json({ error: "Error al subir el archivo: " + uploadError.message });
     }
 
-    // Obtener URL pública de la imagen
     const { data: publicUrlData } = supabase.storage
       .from(BUCKET_NAME)
       .getPublicUrl(fileName);
 
-    const imageUrl = publicUrlData.publicUrl;
-    console.log('✅ Imagen subida exitosamente:', imageUrl);
+    const fileUrl = publicUrlData.publicUrl;
+    console.log('✅ Archivo subido exitosamente:', fileUrl);
 
-    // Guardar en BD con la URL de Supabase
     const productData = {
       name: name.trim(),
       description: description || '',
       price: parseFloat(price),
-      image: imageUrl, // ← URL de Supabase
+      image: fileUrl,
       category: category || 'General',
       stock: stock ? parseInt(stock) : 0
     };
 
-    console.log('💾 Guardando en BD:', productData);
     const newProduct = await createProduct(productData);
-    
-    console.log('🎉 Producto creado exitosamente!');
     
     res.status(201).json({
       success: true,
@@ -118,8 +130,9 @@ export const addProduct = async (req, res) => {
     res.status(500).json({ error: "Error interno del servidor: " + err.message });
   }
 };
-// Agregar al final de productController.js
 
+
+// ✅ Actualizar producto
 export const updateProduct = async (req, res) => {
   console.log('📝 Actualizando producto...');
   
@@ -131,9 +144,8 @@ export const updateProduct = async (req, res) => {
       return res.status(400).json({ error: "ID inválido" });
     }
 
-    let imageUrl = req.body.currentImage; // Mantener imagen actual si no se sube nueva
+    let imageUrl = req.body.currentImage;
 
-    // Si hay nueva imagen, subirla a Supabase
     if (req.file) {
       const fileExt = req.file.originalname.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
@@ -149,8 +161,8 @@ export const updateProduct = async (req, res) => {
         });
 
       if (uploadError) {
-        console.error('❌ Error al subir imagen:', uploadError);
-        return res.status(500).json({ error: "Error al subir la imagen" });
+        console.error('❌ Error al subir archivo:', uploadError);
+        return res.status(500).json({ error: "Error al subir el archivo" });
       }
 
       const { data: publicUrlData } = supabase.storage
@@ -160,7 +172,6 @@ export const updateProduct = async (req, res) => {
       imageUrl = publicUrlData.publicUrl;
       console.log('✅ Nueva imagen subida:', imageUrl);
 
-      // Opcional: Eliminar imagen anterior de Supabase
       if (req.body.currentImage) {
         const oldFileName = req.body.currentImage.split('/').pop();
         await supabase.storage.from(BUCKET_NAME).remove([oldFileName]);
@@ -176,16 +187,12 @@ export const updateProduct = async (req, res) => {
       stock: stock ? parseInt(stock) : 0
     };
 
-    console.log('💾 Actualizando en BD:', productData);
-
     const updatedProduct = await updateProductById(id, productData);
     
     if (!updatedProduct) {
       return res.status(404).json({ error: "Producto no encontrado" });
     }
 
-    console.log('🎉 Producto actualizado exitosamente!');
-    
     res.json({
       success: true,
       message: "Producto actualizado exitosamente",
@@ -198,6 +205,8 @@ export const updateProduct = async (req, res) => {
   }
 };
 
+
+// ✅ Eliminar producto
 export const deleteProduct = async (req, res) => {
   console.log('🗑️ Eliminando producto...');
   
@@ -208,24 +217,19 @@ export const deleteProduct = async (req, res) => {
       return res.status(400).json({ error: "ID inválido" });
     }
 
-    // Obtener producto para eliminar imagen de Supabase
     const product = await getProductById(id);
     
     if (!product) {
       return res.status(404).json({ error: "Producto no encontrado" });
     }
 
-    // Eliminar imagen de Supabase
     if (product.image) {
       const fileName = product.image.split('/').pop();
       await supabase.storage.from(BUCKET_NAME).remove([fileName]);
-      console.log('🗑️ Imagen eliminada de Supabase');
+      console.log('🗑️ Archivo eliminado de Supabase');
     }
 
-    // Eliminar de BD
     await deleteProductById(id);
-    
-    console.log('🎉 Producto eliminado exitosamente!');
     
     res.json({
       success: true,
@@ -234,6 +238,64 @@ export const deleteProduct = async (req, res) => {
 
   } catch (err) {
     console.error("❌ Error en deleteProduct:", err);
+    res.status(500).json({ error: "Error interno del servidor: " + err.message });
+  }
+};
+
+
+// ✅ Subida de archivos STL / OBJ / GCODE
+export const uploadSTLFile = async (req, res) => {
+  console.log('📤 Subiendo archivo STL...');
+  
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "El archivo STL es requerido" });
+    }
+
+    const productId = req.body.productId;
+    const fileExt = req.file.originalname.split('.').pop().toLowerCase();
+
+    if (!['stl', 'obj', 'gcode'].includes(fileExt)) {
+      return res.status(400).json({ error: "Solo se permiten archivos STL, OBJ o GCODE" });
+    }
+
+    const fileName = `product_${productId}_${Date.now()}.${fileExt}`;
+    const MODEL_BUCKET = "models";
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from(MODEL_BUCKET)
+      .upload(fileName, req.file.buffer, {
+        contentType: req.file.mimetype,
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error('❌ Error al subir archivo:', uploadError);
+      return res.status(500).json({ error: "Error al subir el archivo: " + uploadError.message });
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(MODEL_BUCKET)
+      .getPublicUrl(fileName);
+
+    const fileUrl = publicUrlData.publicUrl;
+    const fileSize = (req.file.size / 1024 / 1024).toFixed(2);
+
+    console.log('✅ Archivo subido:', fileUrl);
+
+    res.json({
+      success: true,
+      file: {
+        url: fileUrl,
+        name: req.file.originalname,
+        size: fileSize,
+        type: fileExt.toUpperCase()
+      }
+    });
+
+  } catch (err) {
+    console.error("❌ Error en uploadSTLFile:", err);
     res.status(500).json({ error: "Error interno del servidor: " + err.message });
   }
 };

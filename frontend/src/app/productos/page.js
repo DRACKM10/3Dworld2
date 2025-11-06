@@ -141,7 +141,7 @@ export default function Products() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             bg="white"
-            color="white"
+            color="black"
             border="1px solid"
             borderColor="#5c212b"
             _placeholder={{ color: "gray.400" }}
@@ -189,7 +189,9 @@ export default function Products() {
           {(selectedCategory !== "Todos" || searchTerm) && (
             <Button 
               mt={4} 
-              colorScheme="purple" 
+              colorScheme="black"
+              bg="#5c212b"
+              _hover={{ bg:"#6d6c6c73", transform: "scale(1.05)" }}
               onClick={() => {
                 setSelectedCategory("Todos");
                 setSearchTerm("");

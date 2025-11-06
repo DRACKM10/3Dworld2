@@ -2,18 +2,31 @@
 
 import { Box, Heading, Text, VStack, HStack, Button, Image } from '@chakra-ui/react';
 import { useCart } from '../../context/CartContext';
+import { useRouter } from 'next/navigation';
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, getCartTotal, clearCart } = useCart();
+  const router = useRouter();
 
   return (
-    <Box p={4} maxW="1200px" mx="auto" color="white" minH="100vh">
-      <Heading mb={6} textAlign="center"textShadow="0 0 10px #5c212b">🛒 Tu Carrito de Compras</Heading>
+    <Box p={4} maxW="1200px" mx="auto" color="white" minH="100vh" bg="black">
+      <Heading
+        mb={6}
+        textAlign="center"
+        textShadow="0 0 10px #5c212b"
+      >
+        🛒 Tu Carrito de Compras
+      </Heading>
       
       {cart.length === 0 ? (
         <Box textAlign="center" py={10}>
           <Text fontSize="xl" mb={4}>Tu carrito está vacío</Text>
-          <Button bg="#5c212b" as="a" href="/" color="white" _hover={{bg:"#333333",   transform: "scale(1.02)",}}>
+          <Button
+            bg="#5c212b"
+            color="white"
+            _hover={{ bg:"#333333", transform: "scale(1.02)" }}
+            onClick={() => router.push("/productos")}
+          >
             Seguir Comprando
           </Button>
         </Box>
@@ -47,7 +60,7 @@ export default function CartPage() {
                         <Button 
                           size="sm" 
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          disabled={item.quantity <= 1}
+                          isDisabled={item.quantity <= 1}
                         >
                           -
                         </Button>
@@ -62,7 +75,7 @@ export default function CartPage() {
                     </Box>
                   </HStack>
                   
-                  <VStack align="end" >
+                  <VStack align="end">
                     <Text fontWeight="bold" fontSize="lg">
                       ${(item.price * item.quantity).toFixed(2)}
                     </Text>
@@ -71,10 +84,7 @@ export default function CartPage() {
                       bg="#5c212b"
                       color="#EDEDED"
                       variant="outline"
-                       _hover={{
-                         bg:"#333333",
-                          transform: "scale(1.02)",}}
-
+                      _hover={{ bg:"#333333", transform: "scale(1.02)" }}
                       onClick={() => removeFromCart(item.id)}
                     >
                       Eliminar
@@ -95,11 +105,23 @@ export default function CartPage() {
             </HStack>
             
             <HStack spacing={4}>
-              <Button  bg="#5c212b" color="white" variant="surface" onClick={clearCart}
-               _hover={{bg:"#333333",   transform: "scale(1.02)",}} >
+              <Button
+                bg="#5c212b"
+                color="white"
+                variant="surface"
+                onClick={clearCart}
+                _hover={{ bg:"#333333", transform: "scale(1.02)" }}
+              >
                 Limpiar Carrito
               </Button>
-              <Button bg="#5c212b" color="white" flex={1} size="lg"   _hover={{bg:"#333333",   transform: "scale(1.02)",}} >
+              <Button
+                bg="#5c212b"
+                color="white"
+                flex={1}
+                size="lg"
+                _hover={{ bg:"#333333", transform: "scale(1.02)" }}
+                onClick={() => alert("Compra realizada ✅")}
+              >
                 Proceder al Pago
               </Button>
             </HStack>
