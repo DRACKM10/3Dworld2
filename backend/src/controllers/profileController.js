@@ -1,127 +1,57 @@
-import { getProfileByUserId, createDefaultProfile, updateProfile } from "../models/profileModel.js";
-import { supabase } from "../config/supabase.js";
+import { supabase, BUCKET_NAME } from "../config/supabase.js";
+import { getProfileByUserId, updateProfile } from "../models/profileModel.js";
 import multer from "multer";
+import { v4 as uuidv4 } from "uuid";
 
-// Configurar Multer
-const storage = multer.memoryStorage();
-export const upload = multer({ 
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Solo se permiten imágenes'));
-    }
-  }
-});
+export const upload = multer({ storage: multer.memoryStorage() });
 
-/**
- * Obtener perfil del usuario
- */
+/** 🔹 Obtener perfil */
 export const getProfile = async (req, res) => {
   try {
-    const userId = req.params.userId || req.user?.id;
-
-    if (!userId) {
-      return res.status(400).json({ error: "ID de usuario requerido" });
-    }
-
-    let profile = await getProfileByUserId(userId);
-
-    // Si no existe, crear perfil por defecto
-    if (!profile) {
-      const username = req.user?.username || `user_${userId}`;
-      const email = req.user?.email || "";
-      profile = await createDefaultProfile(userId, username, email);
-    }
-
-    res.json({ success: true, profile });
-
-  } catch (error) {
-    console.error("❌ Error en getProfile:", error);
-    res.status(500).json({ error: "Error al obtener perfil" });
+    const { userId } = req.params;
+    const profile = await getProfileByUserId(userId);
+    if (!profile) return res.status(404).json({ error: "Perfil no encontrado" });
+    res.json(profile);
+  } catch (err) {
+    res.status(500).json({ error: "Error al obtener perfil: " + err.message });
   }
 };
 
-/**
- * Actualizar perfil
- */
+/** 🔹 Actualizar perfil */
 export const updateUserProfile = async (req, res) => {
   try {
-    const userId = req.body.userId || req.user?.id;
+    const userId = req.user.id;
+    const updates = req.body;
 
-    if (!userId) {
-      return res.status(400).json({ error: "ID de usuario requerido" });
-    }
-
-    const profileData = {
-      name: req.body.name,
-      username: req.body.username,
-      description: req.body.description,
-      birthdate: req.body.birthdate,
-      profile_pic: req.body.profile_pic,
-      banner: req.body.banner,
-    };
-
-    const updatedProfile = await updateProfile(userId, profileData);
-
-    res.json({ 
-      success: true, 
-      message: "Perfil actualizado exitosamente",
-      profile: updatedProfile 
-    });
-
-  } catch (error) {
-    console.error("❌ Error en updateUserProfile:", error);
-    res.status(500).json({ error: "Error al actualizar perfil" });
+    const profile = await updateProfile(userId, updates);
+    res.json({ message: "Perfil actualizado", profile });
+  } catch (err) {
+    res.status(500).json({ error: "Error al actualizar perfil: " + err.message });
   }
 };
 
-/**
- * Subir imagen de perfil o banner
- */
+/** 🔹 Subir imagen de perfil */
 export const uploadProfileImage = async (req, res) => {
-  console.log('📤 Subiendo imagen de perfil...');
-  
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: "La imagen es requerida" });
-    }
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: "No se envió ninguna imagen" });
 
-    const { type, userId } = req.body;
+    const filename = `${uuidv4()}-${file.originalname}`;
+    const { error } = await supabase.storage.from("profile").upload(filename, file.buffer, {
+      contentType: file.mimetype,
+      upsert: true,
+    });
 
-    const fileExt = req.file.originalname.split('.').pop();
-    const fileName = `${type}_${userId}_${Date.now()}.${fileExt}`;
+    if (error) throw error;
 
-    console.log('☁️ Subiendo a Supabase:', fileName);
+    const { data: publicUrlData } = supabase.storage.from("profile").getPublicUrl(filename);
+    const publicUrl = publicUrlData.publicUrl;
 
-    const BUCKET_NAME = 'profiles';
+    const userId = req.user.id;
+    const updated = await updateProfile(userId, { profile_pic: publicUrl });
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from(BUCKET_NAME)
-      .upload(fileName, req.file.buffer, {
-        contentType: req.file.mimetype,
-        cacheControl: '3600',
-        upsert: true
-      });
-
-    if (uploadError) {
-      console.error('❌ Error al subir imagen:', uploadError);
-      return res.status(500).json({ error: "Error al subir la imagen" });
-    }
-
-    const { data: publicUrlData } = supabase.storage
-      .from(BUCKET_NAME)
-      .getPublicUrl(fileName);
-
-    const imageUrl = publicUrlData.publicUrl;
-    console.log('✅ Imagen subida:', imageUrl);
-
-    res.json({ success: true, imageUrl });
-
+    res.json({ message: "Imagen subida", url: publicUrl, updated });
   } catch (err) {
-    console.error("❌ Error en uploadProfileImage:", err);
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Error al subir imagen: " + err.message });
   }
 };

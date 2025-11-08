@@ -1,16 +1,26 @@
-import pool from "../config/db.js";
+import { supabase } from "../config/supabase.js";
 
 /**
- * Obtener perfil de usuario
+ * Obtener perfil por user_id
  */
 export const getProfileByUserId = async (userId) => {
   try {
-    const [rows] = await pool.query(
-      "SELECT * FROM user_profiles WHERE user_id = ?",
-      [userId]
-    );
-    return rows[0] || null;
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null; // No encontrado
+      }
+      throw error;
+    }
+
+    return data;
   } catch (error) {
+    console.error('❌ Error en getProfileByUserId:', error);
     throw new Error(`Error al obtener perfil: ${error.message}`);
   }
 };
@@ -20,21 +30,27 @@ export const getProfileByUserId = async (userId) => {
  */
 export const createDefaultProfile = async (userId, username, email) => {
   try {
-    const [result] = await pool.query(
-      `INSERT INTO user_profiles (user_id, name, username, description, profile_pic, banner) 
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        userId,
-        username,
-        username,
-        "¡Bienvenido a mi perfil! Estoy emocionado de ser parte de esta comunidad.",
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=7D00FF&color=fff&size=128`,
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=0b2b33&color=7D00FF&size=1200&bold=true`
-      ]
-    );
-    
-    return await getProfileByUserId(userId);
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .insert([
+        {
+          user_id: userId,
+          name: username,
+          username: username,
+          description: "¡Bienvenido a mi perfil! Estoy emocionado de ser parte de esta comunidad.",
+          profile_pic: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=7D00FF&color=fff&size=128`,
+          banner: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=0b2b33&color=7D00FF&size=1200&bold=true`
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    console.log('✅ Perfil creado para user_id:', userId);
+    return data;
   } catch (error) {
+    console.error('❌ Error en createDefaultProfile:', error);
     throw new Error(`Error al crear perfil: ${error.message}`);
   }
 };
@@ -44,17 +60,29 @@ export const createDefaultProfile = async (userId, username, email) => {
  */
 export const updateProfile = async (userId, profileData) => {
   const { name, username, description, birthdate, profile_pic, banner } = profileData;
-  
+
   try {
-    await pool.query(
-      `UPDATE user_profiles 
-       SET name = ?, username = ?, description = ?, birthdate = ?, profile_pic = ?, banner = ?
-       WHERE user_id = ?`,
-      [name, username, description, birthdate || null, profile_pic, banner, userId]
-    );
-    
-    return await getProfileByUserId(userId);
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .update({
+        name,
+        username,
+        description,
+        birthdate: birthdate || null,
+        profile_pic,
+        banner,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    console.log('✅ Perfil actualizado para user_id:', userId);
+    return data;
   } catch (error) {
+    console.error('❌ Error en updateProfile:', error);
     throw new Error(`Error al actualizar perfil: ${error.message}`);
   }
 };

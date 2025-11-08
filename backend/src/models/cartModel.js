@@ -1,4 +1,4 @@
-import pool from "../config/db.js";
+import supabase from "../config/supabase.js";
 import validator from "validator";
 
 /**

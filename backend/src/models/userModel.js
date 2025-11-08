@@ -1,15 +1,14 @@
-import pool from "../config/db.js";
+import { supabase } from "../config/supabase.js";
 import bcrypt from "bcrypt";
 import validator from "validator";
 
 /**
- * Crea un nuevo usuario en la base de datos.
- * @param {Object} user - Datos del usuario.
+ * Crear usuario
  */
 export const createUser = async (user) => {
   const { username, email, password } = user;
 
-  console.log('createUser llamado con:', { username, email, password: password ? '*'.repeat(password.length) : 'NULL (Google)' });
+  console.log('createUser llamado con:', { username, email, password: password ? '***' : 'NULL' });
 
   if (!username || typeof username !== "string" || username.trim().length < 3) {
     throw new Error("username es requerido y debe tener al menos 3 caracteres");
@@ -18,46 +17,49 @@ export const createUser = async (user) => {
     throw new Error("email no válido");
   }
 
-  // Permitir password null para usuarios de Google
-  if (password !== null && password !== undefined && password.length < 6) {
-    throw new Error("password debe tener al menos 6 caracteres");
-  }
-
-  // Solo hashear si hay password
   let hashedPassword = null;
   if (password) {
+    if (password.length < 6) {
+      throw new Error("password debe tener al menos 6 caracteres");
+    }
     hashedPassword = await bcrypt.hash(password, 10);
-    console.log('Password hasheado en model');
-  } else {
-    console.log('Usuario sin password (Google OAuth)');
-    hashedPassword = null; // ✅ Ahora podemos usar NULL
   }
 
   try {
-    const [result] = await pool.query(
-      "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-      [username.trim(), email.trim().toLowerCase(), hashedPassword]
-    );
-    
-    console.log('✅ Usuario insertado con ID:', result.insertId);
-    return { id: result.insertId, username, email };
-    
-  } catch (error) {
-    console.error('❌ Error en createUser query:', error.message, error.code);
-    if (error.code === "ER_DUP_ENTRY") {
-      if (error.message.includes('email')) {
-        throw new Error("El email ya está registrado");
-      } else if (error.message.includes('username')) {
-        throw new Error("El nombre de usuario ya existe");
+    const { data, error } = await supabase
+      .from('users')
+      .insert([
+        {
+          username: username.trim(),
+          email: email.trim().toLowerCase(),
+          password: hashedPassword
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === '23505') { // Unique violation
+        if (error.message.includes('email')) {
+          throw new Error("El email ya está registrado");
+        } else if (error.message.includes('username')) {
+          throw new Error("El nombre de usuario ya existe");
+        }
+        throw new Error("El usuario o email ya existe");
       }
-      throw new Error("El usuario o email ya existe");
+      throw error;
     }
+
+    console.log('✅ Usuario insertado con ID:', data.id);
+    return { id: data.id, username: data.username, email: data.email };
+  } catch (error) {
+    console.error('❌ Error en createUser:', error.message);
     throw error;
   }
 };
 
 /**
- * Busca un usuario por su email.
+ * Obtener usuario por email
  */
 export const getUserByEmail = async (email) => {
   if (!email || !validator.isEmail(email)) {
@@ -65,24 +67,23 @@ export const getUserByEmail = async (email) => {
   }
 
   try {
-    const [rows] = await pool.query(
-      "SELECT id, username, email, password FROM users WHERE LOWER(email) = LOWER(?)",
-      [email.trim()]
-    );
-    
-    console.log('getUserByEmail rows:', rows.length > 0 ? 'Encontrado' : 'No encontrado');
-    if (rows.length > 0) {
-      console.log('📋 Datos usuario:', { 
-        id: rows[0].id, 
-        username: rows[0].username, 
-        hasPassword: rows[0].password !== null,
-        passwordValue: rows[0].password 
-      });
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, username, email, password')
+      .ilike('email', email.trim())
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null; // No encontrado
+      }
+      throw error;
     }
-    return rows[0] || null;
-    
+
+    console.log('✅ Usuario encontrado:', data.id);
+    return data;
   } catch (error) {
-    console.error('Error en getUserByEmail:', error.message);
+    console.error('❌ Error en getUserByEmail:', error.message);
     throw new Error(`Error al obtener usuario: ${error.message}`);
   }
 };
@@ -103,34 +104,50 @@ export const createGoogleUser = async (userData) => {
   }
 
   try {
-    // ✅ AHORA SÍ PODEMOS USAR NULL
-    const [result] = await pool.query(
-      "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-      [username.trim(), email.trim().toLowerCase(), null] // ✅ NULL permitido
-    );
-    
-    console.log('✅ Usuario Google insertado con ID:', result.insertId);
-    return { id: result.insertId, username, email };
-    
-  } catch (error) {
-    console.error('❌ Error en createGoogleUser:', error.message, error.code);
-    if (error.code === "ER_DUP_ENTRY") {
-      if (error.message.includes('email')) {
-        throw new Error("El email ya está registrado");
-      } else if (error.message.includes('username')) {
-        throw new Error("El nombre de usuario ya existe");
+    const { data, error } = await supabase
+      .from('users')
+      .insert([
+        {
+          username: username.trim(),
+          email: email.trim().toLowerCase(),
+          password: null
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === '23505') {
+        if (error.message.includes('email')) {
+          throw new Error("El email ya está registrado");
+        } else if (error.message.includes('username')) {
+          throw new Error("El nombre de usuario ya existe");
+        }
+        throw new Error("El usuario o email ya existe");
       }
-      throw new Error("El usuario o email ya existe");
+      throw error;
     }
+
+    console.log('✅ Usuario Google insertado con ID:', data.id);
+    return { id: data.id, username: data.username, email: data.email };
+  } catch (error) {
+    console.error('❌ Error en createGoogleUser:', error.message);
     throw error;
   }
 };
+
+/**
+ * Actualizar contraseña
+ */
 export const updateUserPassword = async (userId, hashedPassword) => {
   try {
-    await pool.query(
-      "UPDATE users SET password = ? WHERE id = ?",
-      [hashedPassword, userId]
-    );
+    const { error } = await supabase
+      .from('users')
+      .update({ password: hashedPassword })
+      .eq('id', userId);
+
+    if (error) throw error;
+
     console.log('✅ Contraseña actualizada para user_id:', userId);
   } catch (error) {
     console.error('❌ Error al actualizar contraseña:', error.message);

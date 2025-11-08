@@ -1,36 +1,62 @@
-import pool from "../config/db.js";
+import { supabase } from "../config/supabase.js";
 
 export const createResetToken = async (userId, token, expiresAt) => {
   try {
-    const [result] = await pool.query(
-      "INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)",
-      [userId, token, expiresAt]
-    );
-    return result.insertId;
+    const { data, error } = await supabase
+      .from('password_reset_tokens')
+      .insert([
+        {
+          user_id: userId,
+          token,
+          expires_at: expiresAt.toISOString()
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return data.id;
   } catch (error) {
+    console.error('❌ Error en createResetToken:', error);
     throw new Error(`Error al crear token: ${error.message}`);
   }
 };
 
 export const findTokenByValue = async (token) => {
   try {
-    const [rows] = await pool.query(
-      "SELECT * FROM password_reset_tokens WHERE token = ? AND used = FALSE AND expires_at > NOW()",
-      [token]
-    );
-    return rows[0] || null;
+    const { data, error } = await supabase
+      .from('password_reset_tokens')
+      .select('*')
+      .eq('token', token)
+      .eq('used', false)
+      .gt('expires_at', new Date().toISOString())
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null;
+      }
+      throw error;
+    }
+
+    return data;
   } catch (error) {
+    console.error('❌ Error en findTokenByValue:', error);
     throw new Error(`Error al buscar token: ${error.message}`);
   }
 };
 
 export const markTokenAsUsed = async (token) => {
   try {
-    await pool.query(
-      "UPDATE password_reset_tokens SET used = TRUE WHERE token = ?",
-      [token]
-    );
+    const { error } = await supabase
+      .from('password_reset_tokens')
+      .update({ used: true })
+      .eq('token', token);
+
+    if (error) throw error;
   } catch (error) {
+    console.error('❌ Error en markTokenAsUsed:', error);
     throw new Error(`Error al marcar token como usado: ${error.message}`);
   }
 };

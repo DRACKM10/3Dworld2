@@ -1,28 +1,20 @@
 import express from "express";
-import authMiddleware from "../middleware/authenticateToken.js";
-import { 
-  createOrder, 
-  getOrders, 
-  getOrderById, 
-  updateOrder, 
-  deleteOrder 
+import {
+  createOrder,
+  getOrders,
+  getOrderById,
+  updateOrder,
+  deleteOrder
 } from "../controllers/orderController.js";
+import authenticateToken from "../middleware/authenticateToken.js";
 
 const router = express.Router();
 
-// Crear orden desde carrito (requiere autenticación)
-router.post("/", authMiddleware, createOrder);
-
-// Obtener órdenes del usuario autenticado
-router.get("/", authMiddleware, getOrders);
-
-// Obtener orden específica por ID
-router.get("/:id", authMiddleware, getOrderById);
-
-// Actualizar orden
-router.put("/:id", authMiddleware, updateOrder);
-
-// Eliminar orden
-router.delete("/:id", authMiddleware, deleteOrder);
+// 🔒 Todas protegidas
+router.post("/", authenticateToken, createOrder);
+router.get("/", authenticateToken, getOrders);
+router.get("/:id", authenticateToken, getOrderById);
+router.put("/:id", authenticateToken, updateOrder);
+router.delete("/:id", authenticateToken, deleteOrder);
 
 export default router;
