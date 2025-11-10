@@ -89,6 +89,18 @@ export default function LoginPage() {
   duration: 2000,
 });
 
+// En handleSubmit (login normal)
+if (data.user) {
+  const userName = data.user.username || data.user.name || data.user.email || "Usuario";
+  localStorage.setItem("usuario", userName);
+  localStorage.setItem("userId", data.user.id);
+  localStorage.setItem("userRole", data.user.role || "client"); // ← NUEVO
+  
+  if (data.user.email) {
+    localStorage.setItem("userEmail", data.user.email);
+  }
+}
+
 setTimeout(() => {
   router.push("/");  // ← Cambiar de "/dashboard" o "/perfil" a "/"
 }, 1000);
@@ -151,6 +163,18 @@ setTimeout(() => {
   status: "success",
   duration: 2000,
 });
+
+// En handleGoogleSuccess (login con Google) 
+if (data.success && data.user) {
+  const userName = data.user.username || data.user.name || data.user.email || "Usuario";
+  localStorage.setItem("usuario", userName);
+  localStorage.setItem("userId", data.user.id);
+  localStorage.setItem("userRole", data.user.role || "client"); // ← NUEVO
+  
+  if (data.user.email) {
+    localStorage.setItem("userEmail", data.user.email);
+  }
+}
 
 setTimeout(() => {
   router.push("/");  // ← Cambiar de "/perfil" a "/"

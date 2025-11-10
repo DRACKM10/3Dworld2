@@ -59,7 +59,7 @@ export const createUser = async (user) => {
 };
 
 /**
- * Obtener usuario por email
+ * Obtener usuario por email - INCLUIR ROLE
  */
 export const getUserByEmail = async (email) => {
   if (!email || !validator.isEmail(email)) {
@@ -69,18 +69,18 @@ export const getUserByEmail = async (email) => {
   try {
     const { data, error } = await supabase
       .from('users')
-      .select('id, username, email, password')
+      .select('id, username, email, password, role') // ← AGREGAR ROLE
       .ilike('email', email.trim())
       .single();
 
     if (error) {
       if (error.code === 'PGRST116') {
-        return null; // No encontrado
+        return null;
       }
       throw error;
     }
 
-    console.log('✅ Usuario encontrado:', data.id);
+    console.log('✅ Usuario encontrado:', data.id, '| Role:', data.role);
     return data;
   } catch (error) {
     console.error('❌ Error en getUserByEmail:', error.message);

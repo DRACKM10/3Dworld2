@@ -14,6 +14,8 @@ import {
   PopoverBody,
   PopoverCloseButton,
   useToast,
+  Divider,
+  Text,
 } from "@chakra-ui/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -27,7 +29,6 @@ export default function Header() {
   useEffect(() => {
     const loadCurrentUser = () => {
       try {
-        // 1. Primero intentar cargar con el nuevo sistema (currentUser)
         const userKey = localStorage.getItem("currentUser");
         if (userKey) {
           const storedUserData = localStorage.getItem(userKey);
@@ -39,8 +40,7 @@ export default function Header() {
             return;
           }
         }
-        
-        // 2. Fallback al sistema antiguo (solo nombre)
+
         const storedUserName = localStorage.getItem("usuario");
         if (storedUserName) {
           setUsuario(storedUserName);
@@ -52,39 +52,27 @@ export default function Header() {
     };
 
     loadCurrentUser();
-
-    // Escuchar cambios en localStorage
-    const handleStorageChange = () => {
-      loadCurrentUser();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Polling para detectar cambios (útil cuando se cambia de pestaña)
+    const handleStorageChange = () => loadCurrentUser();
+    window.addEventListener("storage", handleStorageChange);
     const interval = setInterval(loadCurrentUser, 1000);
-    
+
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener("storage", handleStorageChange);
       clearInterval(interval);
     };
   }, []);
 
   const handleLogout = () => {
-    // Limpiar ambos sistemas
     localStorage.removeItem("currentUser");
     localStorage.removeItem("usuario");
     localStorage.removeItem("token");
-    
-    // Limpiar todos los datos de usuario del localStorage
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('user_')) {
-        localStorage.removeItem(key);
-      }
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith("user_")) localStorage.removeItem(key);
     });
-    
+
     setUsuario(null);
     setUserData(null);
-    
+
     toast({
       title: "Sesión cerrada",
       description: "Has cerrado sesión correctamente",
@@ -93,18 +81,19 @@ export default function Header() {
       isClosable: true,
     });
 
-    // Recargar la página para limpiar estados
     setTimeout(() => {
       window.location.href = "/";
     }, 500);
   };
 
   const getAvatarSrc = () => {
-    if (userData?.profilePic) {
+    if (userData?.profilePic && userData.profilePic.trim() !== "") {
       return userData.profilePic;
     }
     if (usuario) {
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(usuario)}&background=7D00FF&color=fff`;
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+        usuario
+      )}&background=7D00FF&color=fff`;
     }
     return "";
   };
@@ -113,7 +102,7 @@ export default function Header() {
     <Box
       as="header"
       p={4}
-      bgGradient="linear(to-r, #5c212bff, #5c212b )"
+      bgGradient="linear(to-r, #5c212bff, #5c212b)"
       color="#EDEDED"
       boxShadow="md"
       position="sticky"
@@ -128,8 +117,7 @@ export default function Header() {
         flexWrap="wrap"
         gap={3}
       >
-        {/* 🔹 Logo */} 
-       
+        {/* 🔹 Logo */}
         <Link href="/" style={{ textDecoration: "none" }}>
           <Heading
             size="md"
@@ -140,7 +128,6 @@ export default function Header() {
             3DWORLD
           </Heading>
         </Link>
-       
 
         {/* 🔹 Buscador */}
         <Input
@@ -160,26 +147,27 @@ export default function Header() {
 
         {/* 🔹 Menú de navegación */}
         <Flex gap={4} flexWrap="wrap" align="center">
-          <Link href="/productos" style={{ textDecoration: "none" }}>
+          {/* 🔸 Cambié Productos -> Comunidad */}
+          <Link href="/comunidad" style={{ textDecoration: "none" }}>
             <Button
               variant="surface"
-              bg="blackAlpha.700"  
+              bg="blackAlpha.700"
               color="#ffffffff"
               borderColor="#000000ff"
               _hover={{
-                bg:"#18181873",
+                bg: "#18181873",
                 transform: "scale(1.05)",
               }}
               transition="all 0.2s ease-in-out"
             >
-              Productos
+              🌐 Comunidad
             </Button>
           </Link>
 
-          {/* 🔹 CartIndicator */}
+          {/* 🔹 Carrito */}
           <CartIndicator />
 
-          {/* 🔹 Si hay usuario, mostrar avatar con menú */}
+          {/* 🔹 Usuario logueado o no */}
           {usuario ? (
             <Popover placement="bottom-end">
               <PopoverTrigger>
@@ -188,7 +176,7 @@ export default function Header() {
                   src={getAvatarSrc()}
                   size="sm"
                   cursor="pointer"
-                  border="2px solid #000000ff"
+                  border="2px solid #ffffff"
                   transition="all 0.2s ease-in-out"
                   _hover={{ transform: "scale(1.1)" }}
                 />
@@ -199,69 +187,65 @@ export default function Header() {
                 border="1px solid #ffffffff"
                 color="#EDEDED"
                 borderRadius="lg"
-                boxShadow="0 0 15px rgba(255, 255, 255, 0.4)"
-                w="180px"
+                boxShadow="0 0 20px rgba(255, 255, 255, 0.3)"
+                w="220px"
+                p={3}
               >
                 <PopoverArrow bg="#ffffffff" />
-                <PopoverCloseButton />
-                <PopoverBody display="flex" flexDirection="column" gap={2} p={3}>
-                  {/* Información del usuario - SIN USAR COMPONENTE TEXT */}
-                  <Box mb={2} textAlign="center">
-                    <Box 
-                      as="span" 
-                      fontSize="sm" 
-                      fontWeight="bold" 
-                      display="block"
-                      noOfLines={1}
-                    >
-                      {usuario}
-                    </Box>
-                    {userData?.email && (
-                      <Box 
-                        as="span" 
-                        fontSize="xs" 
-                        color="gray.400" 
-                        display="block"
-                        noOfLines={1}
-                      >
-                        {userData.email}
-                      </Box>
-                    )}
-                  </Box>
-                  
-                  <Link href="/perfil" style={{ width: '100%' }}>
+                <PopoverCloseButton color="#fff" />
+                <PopoverBody textAlign="center">
+                  {/* Avatar dentro del popover */}
+                  <Avatar
+                    size="lg"
+                    src={getAvatarSrc()}
+                    name={usuario}
+                    mb={2}
+                    border="2px solid #5c212b"
+                    mx="auto"
+                  />
+                  <Text fontWeight="bold" fontSize="sm" mb={1}>
+                    {usuario}
+                  </Text>
+                  {userData?.email && (
+                    <Text fontSize="xs" color="gray.400" mb={2}>
+                      {userData.email}
+                    </Text>
+                  )}
+
+                  <Divider borderColor="#ffffff40" my={2} />
+
+                  <Link href="/perfil" style={{ width: "100%" }}>
                     <Button
                       w="full"
                       size="sm"
                       bg="#5c212b"
                       color="#EDEDED"
-                      variant="outline"
-                       borderColor="#5c212b"
+                      borderColor="#5c212b"
                       _hover={{
-                       bg:"#18181873",
+                        bg: "#18181873",
                         transform: "scale(1.05)",
                       }}
                       transition="all 0.2s ease-in-out"
+                      mb={2}
                     >
-                      Ver perfil
+                      👤 Ver perfil
                     </Button>
                   </Link>
-                  
+
                   <Button
                     w="full"
                     size="sm"
                     bg="#5c212b"
                     color="#EDEDED"
-                    variant="outline"
                     borderColor="#5c212b"
-                      _hover={{
-                       bg:"#18181873",
-                        transform: "scale(1.05)",
-                      }}
-                      transition="all 0.2s ease-in-out"
+                    _hover={{
+                      bg: "#18181873",
+                      transform: "scale(1.05)",
+                    }}
+                    transition="all 0.2s ease-in-out"
                     onClick={handleLogout}
                   >
-                    Cerrar sesión
+                    🚪 Cerrar sesión
                   </Button>
                 </PopoverBody>
               </PopoverContent>
@@ -273,11 +257,11 @@ export default function Header() {
                 color="#EDEDED"
                 bg="blackAlpha.700"
                 borderColor="#000000ff"
-              _hover={{
-                bg:"#18181873",
-                transform: "scale(1.05)",
-              }}
-              transition="all 0.2s ease-in-out"
+                _hover={{
+                  bg: "#18181873",
+                  transform: "scale(1.05)",
+                }}
+                transition="all 0.2s ease-in-out"
               >
                 Iniciar Sesión
               </Button>

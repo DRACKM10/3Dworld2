@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useCart } from '../context/CartContext';
 import { Box, Image, Button, Text, VStack, HStack, IconButton, useToast } from '@chakra-ui/react';
 import { EditIcon, DeleteIcon } from '@chakra-ui/icons';
@@ -9,6 +10,12 @@ export default function ProductCard({ product, onEdit, onDelete }) {
   const { addToCart } = useCart();
   const router = useRouter();
   const toast = useToast();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const role = localStorage.getItem("userRole");
+    setIsAdmin(role === 'admin');
+  }, []);
 
   const handleAddToCart = (e) => {
     e.stopPropagation();
@@ -30,8 +37,13 @@ export default function ProductCard({ product, onEdit, onDelete }) {
     if (!confirm(`¿Eliminar "${product.name}"?`)) return;
 
     try {
+      const token = localStorage.getItem("token");
+      
       const response = await fetch(`http://localhost:8000/api/products/${product.id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       if (!response.ok) throw new Error('Error al eliminar');
@@ -58,7 +70,7 @@ export default function ProductCard({ product, onEdit, onDelete }) {
       borderRadius="lg"
       overflow="hidden"
       p={4}
-      bg="#1818189f"
+      bg="#5c212b1c"
       boxShadow="md"
       position="relative"
       _hover={{
@@ -69,23 +81,25 @@ export default function ProductCard({ product, onEdit, onDelete }) {
       }}
       onClick={handleProductClick}
     >
-      {/* Botones de editar/eliminar */}
-      <HStack position="absolute" top={2} right={2} spacing={1} zIndex={10}>
-        <IconButton
-          icon={<EditIcon />}
-          size="sm"
-          colorScheme="blue"
-          onClick={handleEdit}
-          aria-label="Editar"
-        />
-        <IconButton
-          icon={<DeleteIcon />}
-          size="sm"
-          colorScheme="red"
-          onClick={handleDelete}
-          aria-label="Eliminar"
-        />
-      </HStack>
+      {/* Botones de editar/eliminar - SOLO ADMIN */}
+      {isAdmin && (
+        <HStack position="absolute" top={2} right={2} spacing={1} zIndex={10}>
+          <IconButton
+            icon={<EditIcon />}
+            size="sm"
+            colorScheme="blue"
+            onClick={handleEdit}
+            aria-label="Editar"
+          />
+          <IconButton
+            icon={<DeleteIcon />}
+            size="sm"
+            colorScheme="red"
+            onClick={handleDelete}
+            aria-label="Eliminar"
+          />
+        </HStack>
+      )}
 
       <Image
         src={product.image}
@@ -96,6 +110,7 @@ export default function ProductCard({ product, onEdit, onDelete }) {
         mb={4}
         borderRadius="md"
       />
+      
       <VStack align="start" spacing={2}>
         <Text fontWeight="bold" fontSize="lg" noOfLines={1} color="white">
           {product.name}

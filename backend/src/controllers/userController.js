@@ -19,7 +19,7 @@ if (!process.env.GOOGLE_CLIENT_ID) {
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 /**
- * 🔹 REGISTRO DE USUARIO
+ * 🔹 REGISTRO - Agregar role
  */
 export const registerUser = async (req, res) => {
   try {
@@ -44,7 +44,7 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ error: "El nombre de usuario solo puede contener letras, números, guiones y guiones bajos" });
     }
 
-    // Crear usuario
+    // Crear usuario (por defecto será 'client')
     const user = await createUser({ 
       username: username.trim(), 
       email: email.toLowerCase().trim(), 
@@ -53,9 +53,14 @@ export const registerUser = async (req, res) => {
 
     console.log("✅ Usuario creado con ID:", user.id);
 
-    // Generar token
+    // Generar token CON ROL
     const token = jwt.sign(
-      { id: user.id, username: user.username, email: user.email },
+      { 
+        id: user.id, 
+        username: user.username, 
+        email: user.email,
+        role: user.role || 'client' // ← INCLUIR ROL
+      },
       process.env.JWT_SECRET,
       { expiresIn: "24h" }
     );
@@ -72,7 +77,8 @@ export const registerUser = async (req, res) => {
       user: {
         id: user.id,
         username: user.username,
-        email: user.email
+        email: user.email,
+        role: user.role || 'client' // ← INCLUIR ROL
       },
       token,
     });
@@ -86,7 +92,7 @@ export const registerUser = async (req, res) => {
 };
 
 /**
- * 🔹 LOGIN NORMAL
+ * 🔹 LOGIN - Incluir role en respuesta
  */
 export const loginUser = async (req, res) => {
   try {
@@ -104,13 +110,12 @@ export const loginUser = async (req, res) => {
 
     const user = await getUserByEmail(email.toLowerCase().trim());
 
-    console.log("🔍 Usuario encontrado:", user ? `ID: ${user.id}` : "NO");
+    console.log("🔍 Usuario encontrado:", user ? `ID: ${user.id}, Role: ${user.role}` : "NO");
 
     if (!user) {
       return res.status(401).json({ error: "Credenciales incorrectas" });
     }
 
-    // Verificar si es usuario de Google
     if (user.password === null) {
       console.log("⚠️ Usuario de Google intentando login normal");
       return res.status(401).json({ 
@@ -126,8 +131,14 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ error: "Credenciales incorrectas" });
     }
 
+    // Generar token CON ROL
     const token = jwt.sign(
-      { id: user.id, username: user.username, email: user.email },
+      { 
+        id: user.id, 
+        username: user.username, 
+        email: user.email,
+        role: user.role || 'client' // ← INCLUIR ROL
+      },
       process.env.JWT_SECRET,
       { expiresIn: "24h" }
     );
@@ -139,14 +150,15 @@ export const loginUser = async (req, res) => {
       console.log("✅ Perfil creado para usuario existente:", user.id);
     }
 
-    console.log("✅ Login exitoso:", user.email);
+    console.log("✅ Login exitoso:", user.email, "| Role:", user.role);
 
     res.json({
       message: "Login exitoso",
       user: {
         id: user.id,
         username: user.username,
-        email: user.email
+        email: user.email,
+        role: user.role || 'client' // ← INCLUIR ROL
       },
       token
     });

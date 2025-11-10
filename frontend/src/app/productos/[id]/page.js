@@ -153,7 +153,7 @@ export default function ProductPage() {
               bg="white"
               color="black"
               width="100%"
-              onClick={() => router.push("/productos")}
+              onClick={() => router.push("/prodcutos")}
             >
               ← Volver a productos
             </Button>
