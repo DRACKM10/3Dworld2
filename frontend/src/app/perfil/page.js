@@ -46,7 +46,7 @@ export default function Perfil() {
 
         if (!userId || !token) {
           console.log('❌ No hay sesión, redirigiendo...');
-          router.push('/login');
+          router.push('/log-in');
           return;
         }
 
@@ -91,7 +91,7 @@ export default function Perfil() {
           status: "error",
           duration: 3000,
         });
-        router.push('/login');
+        router.push('/log-in');
       } finally {
         setLoading(false);
       }

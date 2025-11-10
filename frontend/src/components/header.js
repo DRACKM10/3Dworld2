@@ -147,22 +147,6 @@ export default function Header() {
 
         {/* 🔹 Menú de navegación */}
         <Flex gap={4} flexWrap="wrap" align="center">
-          {/* 🔸 Cambié Productos -> Comunidad */}
-          <Link href="/comunidad" style={{ textDecoration: "none" }}>
-            <Button
-              variant="surface"
-              bg="blackAlpha.700"
-              color="#ffffffff"
-              borderColor="#000000ff"
-              _hover={{
-                bg: "#18181873",
-                transform: "scale(1.05)",
-              }}
-              transition="all 0.2s ease-in-out"
-            >
-              🌐 Comunidad
-            </Button>
-          </Link>
 
           {/* 🔹 Carrito */}
           <CartIndicator />

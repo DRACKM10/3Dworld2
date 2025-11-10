@@ -9,17 +9,20 @@ import {
   Image,
   Button,
   VStack,
-  Flex,
   Input,
   InputGroup,
   InputLeftElement,
   HStack,
   useToast,
+  Spinner,
 } from "@chakra-ui/react";
 import { SearchIcon } from "@chakra-ui/icons";
 import { useRouter } from "next/navigation";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
-export default function TiendaCliente() {
+const supabase = createClientComponentClient();
+
+export default function Tienda() {
   const router = useRouter();
   const toast = useToast();
   const [products, setProducts] = useState([]);
@@ -28,7 +31,39 @@ export default function TiendaCliente() {
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [searchTerm, setSearchTerm] = useState("");
   const [categories, setCategories] = useState(["Todos"]);
+  const [userRole, setUserRole] = useState("cliente");
 
+  // --- Obtener rol desde Supabase ---
+  useEffect(() => {
+    async function fetchUserRole() {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          const { data: profile } = await supabase
+            .from("user_profiles")
+            .select("role")
+            .eq("user_id", user.id)
+            .single();
+
+          const role = profile?.role || "cliente";
+          setUserRole(role);
+          localStorage.setItem("userRole", role);
+        } else {
+          setUserRole("cliente");
+        }
+      } catch (err) {
+        console.error("Error al obtener rol:", err);
+        setUserRole("cliente");
+      }
+    }
+
+    fetchUserRole();
+  }, []);
+
+  // --- Cargar productos ---
   useEffect(() => {
     async function fetchProducts() {
       try {
@@ -55,9 +90,11 @@ export default function TiendaCliente() {
         setLoading(false);
       }
     }
+
     fetchProducts();
   }, [toast]);
 
+  // --- Filtrado ---
   useEffect(() => {
     let result = products;
 
@@ -76,6 +113,39 @@ export default function TiendaCliente() {
     setFilteredProducts(result);
   }, [selectedCategory, searchTerm, products]);
 
+  // --- ACCIONES ADMIN ---
+  const handleDeleteProduct = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:8000/api/products/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Error al eliminar producto");
+
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+      toast({
+        title: "Producto eliminado",
+        status: "success",
+        duration: 2000,
+      });
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el producto",
+        status: "error",
+      });
+    }
+  };
+
+  const handleAddProduct = () => router.push("/admin/agregar-producto");
+  const handleEditProduct = (id) => router.push(`/admin/editar-producto/${id}`);
+
+  // --- ACCIONES CLIENTE ---
   const handleAddToCart = (product) => {
     toast({
       title: "Agregado al carrito",
@@ -88,7 +158,8 @@ export default function TiendaCliente() {
   if (loading) {
     return (
       <Box p={4} textAlign="center" bg="#000000" minH="100vh">
-        <Text color="white" fontSize="xl">
+        <Spinner size="xl" color="red.500" />
+        <Text color="white" mt={4}>
           Cargando productos...
         </Text>
       </Box>
@@ -96,21 +167,30 @@ export default function TiendaCliente() {
   }
 
   return (
-    <Box
-      bgGradient="linear(to-b, #000000, #0d0d0d)"
-      minH="100vh"
-      p={6}
-      borderRadius="lg"
-    >
+    <Box minH="100vh" p={6}>
       <Box maxW="1400px" mx="auto">
         {/* Header */}
         <Box mb={8} textAlign="center">
           <Heading color="white" size="2xl" mb={2}>
-            Catálogo de Productos
+            Bienvenido a 3Dworld
           </Heading>
           <Text color="gray.400" fontSize="lg">
-            Explora nuestros modelos y artículos en 3D
+            {userRole === "admin"
+              ? "Panel de administración de productos"
+              : "Descubre nuestros increíbles productos de impresión 3D"}
           </Text>
+
+          {userRole === "admin" && (
+            <Button
+              mt={4}
+              bg="#5c212b"
+              color="white"
+              _hover={{ bg: "#7a2d3b" }}
+              onClick={handleAddProduct}
+            >
+              ➕ Agregar nuevo producto
+            </Button>
+          )}
         </Box>
 
         {/* Barra de búsqueda */}
@@ -139,11 +219,7 @@ export default function TiendaCliente() {
             <Button
               key={category}
               size="md"
-              bg={
-                selectedCategory === category
-                  ? "#5c212b"
-                  : "transparent"
-              }
+              bg={selectedCategory === category ? "#5c212b" : "transparent"}
               border="1px solid #5c212b"
               color="white"
               _hover={{
@@ -156,13 +232,6 @@ export default function TiendaCliente() {
             </Button>
           ))}
         </HStack>
-
-        {/* Contador de productos */}
-        <Text color="gray.400" mb={4}>
-          {filteredProducts.length} producto
-          {filteredProducts.length !== 1 ? "s" : ""} encontrado
-          {filteredProducts.length !== 1 ? "s" : ""}
-        </Text>
 
         {/* Grid de productos */}
         {filteredProducts.length > 0 ? (
@@ -180,10 +249,9 @@ export default function TiendaCliente() {
                 _hover={{
                   transform: "scale(1.03)",
                   boxShadow: "0 0 15px rgba(92, 33, 43, 0.6)",
-                  cursor: "pointer",
                 }}
-                onClick={() => router.push(`/productos/${product.id}`)}
-              >
+                 onClick={() => router.push(`/productos/${product.id}`)} // 👈 Redirige al detalle
+                >
                 <Image
                   src={product.image}
                   alt={product.name}
@@ -196,12 +264,7 @@ export default function TiendaCliente() {
                 />
 
                 <VStack align="start" spacing={2}>
-                  <Text
-                    fontWeight="bold"
-                    fontSize="lg"
-                    noOfLines={1}
-                    color="white"
-                  >
+                  <Text fontWeight="bold" fontSize="lg" color="white">
                     {product.name}
                   </Text>
                   <Text color="gray.400" fontSize="sm" noOfLines={2}>
@@ -211,56 +274,53 @@ export default function TiendaCliente() {
                     ${product.price}
                   </Text>
 
-                  {product.stock !== undefined && (
-                    <Text
-                      fontSize="xs"
-                      color={product.stock > 0 ? "green.400" : "red.400"}
+                  {/* Botones dinámicos */}
+                  {userRole === "admin" ? (
+                    <HStack w="100%">
+                      <Button
+                        bg="blue.600"
+                        color="white"
+                        _hover={{ bg: "blue.700" }}
+                        onClick={() => handleEditProduct(product.id)}
+                        w="50%"
+                      >
+                        ✏️ Editar
+                      </Button>
+                      <Button
+                        bg="red.600"
+                        color="white"
+                        _hover={{ bg: "red.700" }}
+                        onClick={() => handleDeleteProduct(product.id)}
+                        w="50%"
+                      >
+                        🗑️ Eliminar
+                      </Button>
+                    </HStack>
+                  ) : (
+                    <Button
+                      bg="#5c212b"
+                      color="white"
+                      width="100%"
+                      _hover={{
+                        bg: "#7a2d3b",
+                        transform: "scale(1.05)",
+                      }}
+                      onClick={() => handleAddToCart(product)}
+                      size="lg"
+                      isDisabled={product.stock === 0}
                     >
-                      {product.stock > 0
-                        ? `${product.stock} disponibles`
-                        : "Agotado"}
-                    </Text>
+                      🛒 Agregar al carrito
+                    </Button>
                   )}
-
-                  <Button
-                    bg="#5c212b"
-                    color="white"
-                    width="100%"
-                    _hover={{
-                      bg: "#7a2d3b",
-                      transform: "scale(1.05)",
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddToCart(product);
-                    }}
-                    size="lg"
-                    isDisabled={product.stock === 0}
-                  >
-                    🛒 Agregar al carrito
-                  </Button>
                 </VStack>
               </Box>
             ))}
           </SimpleGrid>
         ) : (
           <Box textAlign="center" py={10}>
-            <Text color="white" fontSize="xl" mb={4}>
+            <Text color="white" fontSize="xl">
               No se encontraron productos
             </Text>
-            {(selectedCategory !== "Todos" || searchTerm) && (
-              <Button
-                bg="#5c212b"
-                color="white"
-                _hover={{ bg: "#7a2d3b" }}
-                onClick={() => {
-                  setSelectedCategory("Todos");
-                  setSearchTerm("");
-                }}
-              >
-                Limpiar filtros
-              </Button>
-            )}
           </Box>
         )}
       </Box>
