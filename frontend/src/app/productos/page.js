@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Flex, Button, Box, Heading } from "@chakra-ui/react";
+import { Flex, Button, Box, Heading, Text } from "@chakra-ui/react";
 import ProductList from "../../components/ProductList";
 import ProductFormModal from "../../components/ProductFormModal";
 import ProtectedRoute from "../../components/ProtectedRoute";
@@ -37,18 +37,27 @@ export default function ProductosAdmin() {
         zIndex={1}
         minHeight="100vh"
       >
-        <Flex justify="space-between" align="center" mb={6}>
-          <Heading color="white">Panel de Administración - Productos</Heading>
+        <Flex justify="space-between" align="center" mb={6} flexWrap="wrap" gap={4}>
+          <Box>
+            <Heading color="white" mb={2}>
+              🔧 Panel de Administración
+            </Heading>
+            <Text color="gray.400">
+              Gestiona todos los productos de la tienda
+            </Text>
+          </Box>
+          
           <Button 
             color="white" 
             bg="#5c212b" 
-            _hover={{ bg:"#6d6c6c73", transform: "scale(1.05)" }} 
+            _hover={{ bg:"#7a2d3b", transform: "scale(1.05)" }} 
             onClick={() => {
               setEditProduct(null);
               setIsModalOpen(true);
             }}
+            size="lg"
           >
-            Agregar Producto
+            ➕ Agregar Producto
           </Button>
         </Flex>
 
