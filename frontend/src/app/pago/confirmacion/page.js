@@ -9,21 +9,111 @@ import {
   Button,
   Divider,
   HStack,
+  Spinner,
+  useToast,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 
 export default function ConfirmacionPage() {
   const router = useRouter();
+  const toast = useToast();
   const [pagoData, setPagoData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [orderCreated, setOrderCreated] = useState(false);
 
   useEffect(() => {
-    const data = localStorage.getItem("pagoData");
-    if (data) {
-      setPagoData(JSON.parse(data));
-    } else {
-      router.push("/"); // Si no hay datos, vuelve al inicio
-    }
-  }, [router]);
+    const procesarPedido = async () => {
+      const data = localStorage.getItem("pagoData");
+      const cartItems = JSON.parse(localStorage.getItem("cartItems") || "[]");
+      const userId = localStorage.getItem("userId");
+      const userEmail = localStorage.getItem("userEmail");
+
+      if (!data) {
+        router.push("/");
+        return;
+      }
+
+      const pagoInfo = JSON.parse(data);
+      setPagoData(pagoInfo);
+
+      // Calcular total
+      const total = cartItems.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
+
+      try {
+        // Enviar pedido al backend
+        const response = await fetch("http://localhost:8000/api/orders", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: userId,
+            email: userEmail || pagoInfo.email,
+            nombre: pagoInfo.nombre,
+            direccion: pagoInfo.direccion,
+            telefono: pagoInfo.telefono,
+            tipoPago: pagoInfo.tipoPago,
+            tarjeta: pagoInfo.tarjeta,
+            expiracion: pagoInfo.expiracion,
+            items: cartItems,
+            total: total,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Error al crear el pedido");
+        }
+
+        const result = await response.json();
+        console.log("✅ Pedido creado:", result);
+
+        setOrderCreated(true);
+
+        // Limpiar carrito y datos de pago
+        localStorage.removeItem("cartItems");
+        localStorage.removeItem("pagoData");
+
+        toast({
+          title: "✅ Pedido confirmado",
+          description: "Recibirás un email con los detalles",
+          status: "success",
+          duration: 5000,
+        });
+
+      } catch (error) {
+        console.error("❌ Error:", error);
+        toast({
+          title: "❌ Error",
+          description: "Hubo un problema al procesar tu pedido",
+          status: "error",
+          duration: 5000,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    procesarPedido();
+  }, [router, toast]);
+
+  if (loading) {
+    return (
+      <Box
+        minH="100vh"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        bg="black"
+      >
+        <VStack>
+          <Spinner size="xl" color="#5c212b" />
+          <Text color="white" mt={4}>
+            Procesando tu pedido...
+          </Text>
+        </VStack>
+      </Box>
+    );
+  }
 
   if (!pagoData) return null;
 
@@ -33,14 +123,14 @@ export default function ConfirmacionPage() {
       display="flex"
       alignItems="center"
       justifyContent="center"
-      
+      bg="black"
       px={4}
     >
       <Box
         bg="#1e1e1e"
         p={10}
         rounded="2xl"
-        boxShadow="0 0 25px rgba(92, 33, 43, 0.09)"
+        boxShadow="0 0 25px rgba(92, 33, 43, 0.5)"
         maxW="600px"
         w="full"
       >
@@ -55,9 +145,15 @@ export default function ConfirmacionPage() {
         </Heading>
 
         <VStack spacing={4} align="stretch" color="gray.200">
-          <Text><strong>Nombre:</strong> {pagoData.nombre}</Text>
-          <Text><strong>Dirección:</strong> {pagoData.direccion}</Text>
-          <Text><strong>Teléfono:</strong> {pagoData.telefono}</Text>
+          <Text>
+            <strong>Nombre:</strong> {pagoData.nombre}
+          </Text>
+          <Text>
+            <strong>Dirección:</strong> {pagoData.direccion}
+          </Text>
+          <Text>
+            <strong>Teléfono:</strong> {pagoData.telefono}
+          </Text>
           <Text>
             <strong>Método de pago:</strong>{" "}
             {pagoData.tipoPago === "tarjeta"
@@ -67,7 +163,7 @@ export default function ConfirmacionPage() {
               : "Pago contra entrega"}
           </Text>
 
-          {pagoData.tipoPago === "tarjeta" && (
+          {pagoData.tipoPago === "tarjeta" && pagoData.tarjeta && (
             <>
               <Text>
                 <strong>Tarjeta:</strong> **** **** ****{" "}
@@ -86,7 +182,10 @@ export default function ConfirmacionPage() {
               ¡Tu pago ha sido procesado exitosamente!
             </Text>
             <Text color="gray.400">
-              En breve recibirás un correo con la confirmación de tu pedido.
+              📧 Hemos enviado un correo con la confirmación de tu pedido.
+            </Text>
+            <Text color="gray.500" fontSize="sm" mt={2}>
+              Revisa tu bandeja de entrada y spam.
             </Text>
           </Box>
 
@@ -104,9 +203,9 @@ export default function ConfirmacionPage() {
               borderColor="#5c212b"
               color="white"
               _hover={{ bg: "#5c212b", transform: "scale(1.05)" }}
-              onClick={() => router.push("/")}
+              onClick={() => router.push("/perfil")}
             >
-              Volver al Inicio
+              Ver Mis Pedidos
             </Button>
           </HStack>
         </VStack>
