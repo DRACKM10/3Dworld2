@@ -20,12 +20,10 @@ import {
 } from "@chakra-ui/react";
 import { SearchIcon, EditIcon, DeleteIcon } from "@chakra-ui/icons";
 import { useRouter } from "next/navigation";
-import { useCart } from "../context/CartContext"; // ← IMPORTAR CartContext
 
 export default function HomePage() {
   const router = useRouter();
   const toast = useToast();
-  const { addToCart } = useCart(); // ← USAR CartContext
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -143,21 +141,15 @@ export default function HomePage() {
     router.push("/productos");
   };
 
-  // Acción de Cliente - ACTUALIZADA
-  const handleAddToCartClick = (product, e) => {
+  // Acción de Cliente
+  const handleAddToCart = (product, e) => {
     e.stopPropagation();
     
-    console.log("🛒 Agregando al carrito:", product);
-    
-    // Usar la función del CartContext
-    addToCart(product);
-    
     toast({
-      title: "✅ Agregado al carrito",
+      title: "Agregado al carrito",
       description: `${product.name} agregado exitosamente`,
       status: "success",
       duration: 2000,
-      isClosable: true,
     });
   };
 
@@ -351,7 +343,7 @@ export default function HomePage() {
                     </Text>
                   )}
 
-                  {/* Botón Cliente - Solo visible para no-admin */}
+                  {/* Botón Cliente - Solo visible para no-admin o no logueados */}
                   {userRole !== "admin" && (
                     <Button
                       bg="#5c212b"
@@ -361,7 +353,7 @@ export default function HomePage() {
                         bg: "#7a2d3b",
                         transform: "scale(1.05)",
                       }}
-                      onClick={(e) => handleAddToCartClick(product, e)}
+                      onClick={(e) => handleAddToCart(product, e)}
                       size="lg"
                       isDisabled={product.stock === 0}
                     >
