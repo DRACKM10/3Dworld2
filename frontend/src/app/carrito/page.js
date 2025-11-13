@@ -5,11 +5,11 @@ import { useCart } from '../../context/CartContext';
 import { useRouter } from 'next/navigation';
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateQuantity, getCartTotal, clearCart } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, getCartTotal, clearCart } = useCart();
   const router = useRouter();
 
   return (
-    <Box p={4} maxW="1200px" mx="auto" color="white" minH="100vh" >
+    <Box p={4} maxW="1200px" mx="auto" color="white" minH="100vh">
       <Heading
         mb={6}
         textAlign="center"
@@ -18,7 +18,7 @@ export default function CartPage() {
         🛒 Tu Carrito de Compras
       </Heading>
 
-      {cart.length === 0 ? (
+      {cartItems.length === 0 ? (
         <Box textAlign="center" py={10}>
           <Text fontSize="xl" mb={4}>Tu carrito está vacío</Text>
           <Button
@@ -33,7 +33,7 @@ export default function CartPage() {
       ) : (
         <>
           <VStack spacing={4} align="stretch" mb={8}>
-            {cart.map((item) => (
+            {cartItems.map((item) => (
               <Box
                 key={item.id}
                 p={4}

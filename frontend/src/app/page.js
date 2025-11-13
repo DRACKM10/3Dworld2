@@ -20,10 +20,12 @@ import {
 } from "@chakra-ui/react";
 import { SearchIcon, EditIcon, DeleteIcon } from "@chakra-ui/icons";
 import { useRouter } from "next/navigation";
+import { useCart } from "../context/CartContext"; // ← IMPORTAR CARRITO
 
 export default function HomePage() {
   const router = useRouter();
   const toast = useToast();
+  const { addToCart } = useCart(); // ← USAR CARRITO
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -141,12 +143,17 @@ export default function HomePage() {
     router.push("/productos");
   };
 
-  // Acción de Cliente
+  // ✅ ACCIÓN DE CLIENTE ARREGLADA
   const handleAddToCart = (product, e) => {
     e.stopPropagation();
     
+    console.log("🛒 Agregando al carrito:", product);
+    
+    // Agregar al carrito usando el contexto
+    addToCart(product);
+    
     toast({
-      title: "Agregado al carrito",
+      title: "✅ Agregado al carrito",
       description: `${product.name} agregado exitosamente`,
       status: "success",
       duration: 2000,
@@ -155,7 +162,7 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <Box p={4} textAlign="center" bg="black" minH="100vh" display="flex" alignItems="center" justifyContent="center">
+      <Box p={4} textAlign="center" minH="100vh" display="flex" alignItems="center" justifyContent="center">
         <VStack>
           <Spinner size="xl" color="#5c212b" />
           <Text color="white" mt={4}>Cargando productos...</Text>
@@ -165,7 +172,7 @@ export default function HomePage() {
   }
 
   return (
-    <Box  minH="100vh" p={4}>
+    <Box minH="100vh" p={4}>
       <Box maxW="1400px" mx="auto">
         {/* Header */}
         <Box mb={8} textAlign="center">
@@ -271,7 +278,7 @@ export default function HomePage() {
                 }}
                 onClick={() => router.push(`/productos/${product.id}`)}
               >
-                {/* Botones de Admin - Solo visible para admin */}
+                {/* Botones de Admin */}
                 {userRole === "admin" && (
                   <Flex
                     position="absolute"
@@ -343,7 +350,7 @@ export default function HomePage() {
                     </Text>
                   )}
 
-                  {/* Botón Cliente - Solo visible para no-admin o no logueados */}
+                  {/* Botón Cliente */}
                   {userRole !== "admin" && (
                     <Button
                       bg="#5c212b"

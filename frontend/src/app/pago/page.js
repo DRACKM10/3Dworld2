@@ -13,12 +13,17 @@ import {
   Select,
   Text,
   Divider,
-  Alert,
-  AlertIcon,
   FormErrorMessage,
   useToast,
+  Alert,
+  AlertIcon,
+  AlertDescription,
+  List,
+  ListItem,
+  ListIcon,
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
+import { CheckCircleIcon } from "@chakra-ui/icons";
 
 export default function PagoPage() {
   const router = useRouter();
@@ -35,13 +40,16 @@ export default function PagoPage() {
   });
   const [errors, setErrors] = useState({});
   const [usuarioValido, setUsuarioValido] = useState(true);
+  const [cartItems, setCartItems] = useState([]);
+  const [totalCart, setTotalCart] = useState(0);
 
-  // Validar si el usuario ha iniciado sesión
+  // Validar usuario y cargar carrito
   useEffect(() => {
     if (typeof window !== "undefined") {
       const user = localStorage.getItem("usuario");
       const userEmail = localStorage.getItem("userEmail");
       
+      // Validar sesión
       if (!user) {
         setUsuarioValido(false);
         toast({
@@ -51,13 +59,66 @@ export default function PagoPage() {
           duration: 3000,
         });
         router.push("/login");
-      } else {
-        setUsuarioValido(true);
-        
-        // Pre-llenar email si existe
+        return;
+      }
+
+      // Cargar carrito desde localStorage
+      const storedCart = localStorage.getItem("cartItems");
+      console.log("🛒 Carrito en localStorage:", storedCart);
+
+      if (!storedCart || storedCart === "[]") {
+        toast({
+          title: "🛒 Carrito vacío",
+          description: "Debes agregar productos al carrito primero",
+          status: "warning",
+          duration: 3000,
+        });
+        router.push("/");
+        return;
+      }
+
+      try {
+        const items = JSON.parse(storedCart);
+        console.log("📦 Items del carrito:", items);
+
+        if (!items || items.length === 0) {
+          toast({
+            title: "🛒 Carrito vacío",
+            description: "Debes agregar productos al carrito primero",
+            status: "warning",
+            duration: 3000,
+          });
+          router.push("/");
+          return;
+        }
+
+        setCartItems(items);
+
+        // Calcular total
+        const total = items.reduce((sum, item) => {
+          const price = parseFloat(item.price) || 0;
+          const quantity = parseInt(item.quantity) || 1;
+          return sum + (price * quantity);
+        }, 0);
+
+        console.log("💰 Total calculado:", total);
+        setTotalCart(total);
+
+        // Pre-llenar email
         if (userEmail) {
           setFormData(prev => ({ ...prev, email: userEmail }));
         }
+
+        setUsuarioValido(true);
+      } catch (error) {
+        console.error("❌ Error al parsear carrito:", error);
+        toast({
+          title: "Error",
+          description: "Error al cargar el carrito",
+          status: "error",
+          duration: 3000,
+        });
+        router.push("/");
       }
     }
   }, [router, toast]);
@@ -66,7 +127,6 @@ export default function PagoPage() {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
     
-    // Limpiar error del campo al escribir
     if (errors[name]) {
       setErrors({ ...errors, [name]: "" });
     }
@@ -75,7 +135,6 @@ export default function PagoPage() {
   const validateForm = () => {
     const newErrors = {};
 
-    // Validar campos obligatorios
     if (!formData.nombre.trim()) {
       newErrors.nombre = "El nombre es obligatorio";
     }
@@ -100,7 +159,6 @@ export default function PagoPage() {
       newErrors.tipoPago = "Selecciona un método de pago";
     }
 
-    // Validar campos de tarjeta si se seleccionó ese método
     if (formData.tipoPago === "tarjeta") {
       if (!formData.tarjeta.trim()) {
         newErrors.tarjeta = "El número de tarjeta es obligatorio";
@@ -129,26 +187,27 @@ export default function PagoPage() {
     e.preventDefault();
 
     console.log("📋 Datos del formulario:", formData);
+    console.log("🛒 Items del carrito:", cartItems);
+    console.log("💰 Total:", totalCart);
 
-    // Validar formulario
     if (!validateForm()) {
-      console.log("❌ Errores de validación:", errors);
-      
       toast({
         title: "❌ Formulario incompleto",
         description: "Por favor completa todos los campos obligatorios",
         status: "error",
         duration: 3000,
       });
-      
-      // Scroll al primer error
-      const firstErrorField = Object.keys(errors)[0];
-      if (firstErrorField) {
-        const element = document.getElementsByName(firstErrorField)[0];
-        element?.scrollIntoView({ behavior: "smooth", block: "center" });
-        element?.focus();
-      }
-      
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      toast({
+        title: "❌ Carrito vacío",
+        description: "No hay productos en el carrito",
+        status: "error",
+        duration: 3000,
+      });
+      router.push("/");
       return;
     }
 
@@ -164,13 +223,12 @@ export default function PagoPage() {
       duration: 2000,
     });
 
-    // Redirigir a confirmación
     setTimeout(() => {
       router.push("/pago/confirmacion");
     }, 500);
   };
 
-  if (!usuarioValido) return null;
+  if (!usuarioValido || cartItems.length === 0) return null;
 
   return (
     <Box
@@ -187,7 +245,7 @@ export default function PagoPage() {
         p={10}
         rounded="2xl"
         boxShadow="0 0 25px rgba(92, 33, 43, 0.8)"
-        maxW="550px"
+        maxW="650px"
         w="full"
       >
         <Heading
@@ -199,6 +257,31 @@ export default function PagoPage() {
         >
           💳 Proceso de Pago Seguro
         </Heading>
+
+        {/* Resumen del carrito */}
+        <Box
+          bg="rgba(92, 33, 43, 0.2)"
+          p={4}
+          borderRadius="md"
+          mb={6}
+          border="1px solid #5c212b"
+        >
+          <Heading size="sm" color="white" mb={3}>
+            📦 Resumen de tu pedido
+          </Heading>
+          <List spacing={2}>
+            {cartItems.map((item, index) => (
+              <ListItem key={index} color="gray.300" fontSize="sm">
+                <ListIcon as={CheckCircleIcon} color="#5c212b" />
+                {item.name} x {item.quantity || 1} - ${(parseFloat(item.price) * (item.quantity || 1)).toFixed(2)}
+              </ListItem>
+            ))}
+          </List>
+          <Divider my={3} borderColor="gray.600" />
+          <Text color="white" fontSize="lg" fontWeight="bold" textAlign="right">
+            Total: ${totalCart.toFixed(2)}
+          </Text>
+        </Box>
 
         <form onSubmit={handleSubmit}>
           <VStack spacing={4} align="stretch">
@@ -294,7 +377,7 @@ export default function PagoPage() {
               <FormErrorMessage>{errors.tipoPago}</FormErrorMessage>
             </FormControl>
 
-            {/* Campos de tarjeta - Solo si se selecciona "tarjeta" */}
+            {/* Campos de tarjeta */}
             {formData.tipoPago === "tarjeta" && (
               <>
                 <FormControl isInvalid={!!errors.tarjeta} isRequired>
@@ -353,7 +436,6 @@ export default function PagoPage() {
               </>
             )}
 
-            {/* Botón de envío */}
             <Button
               type="submit"
               mt={4}
@@ -363,7 +445,7 @@ export default function PagoPage() {
               w="full"
               size="lg"
             >
-              Continuar con el pago
+              Confirmar pedido por ${totalCart.toFixed(2)}
             </Button>
           </VStack>
         </form>
