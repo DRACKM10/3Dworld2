@@ -9,7 +9,7 @@ export default function CartPage() {
   const router = useRouter();
 
   return (
-    <Box p={4} maxW="1200px" mx="auto" color="white" minH="100vh" bg="black">
+    <Box p={4} maxW="1200px" mx="auto" color="white" minH="100vh" >
       <Heading
         mb={6}
         textAlign="center"

@@ -4,7 +4,6 @@ import {
   Box,
   Flex,
   Heading,
-  Input,
   Button,
   Avatar,
   Popover,
@@ -128,22 +127,6 @@ export default function Header() {
             3DWORLD
           </Heading>
         </Link>
-
-        {/* 🔹 Buscador */}
-        <Input
-          placeholder="Buscar productos"
-          flex="1"
-          maxW={{ base: "100%", md: "600px" }}
-          bg="white"
-          color="black"
-          borderRadius="lg"
-          border="2px solid #ffffff"
-          _focus={{
-            borderColor: "#000000ff",
-            boxShadow: "0 0 0 1px #000000ff",
-          }}
-          _placeholder={{ color: "gray.500" }}
-        />
 
         {/* 🔹 Menú de navegación */}
         <Flex gap={4} flexWrap="wrap" align="center">

@@ -165,7 +165,7 @@ export default function HomePage() {
   }
 
   return (
-    <Box bg="black" minH="100vh" p={4}>
+    <Box  minH="100vh" p={4}>
       <Box maxW="1400px" mx="auto">
         {/* Header */}
         <Box mb={8} textAlign="center">
