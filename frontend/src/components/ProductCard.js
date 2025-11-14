@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { Box, Image, Button, Text, VStack, HStack, IconButton, useToast } from '@chakra-ui/react';
 import { EditIcon, DeleteIcon } from '@chakra-ui/icons';
 import { useRouter } from 'next/navigation';
+import { StlViewer } from "react-stl-viewer";
 
 export default function ProductCard({ product, onEdit, onDelete }) {
   const { addToCart } = useCart();
@@ -81,7 +82,7 @@ export default function ProductCard({ product, onEdit, onDelete }) {
       }}
       onClick={handleProductClick}
     >
-      {/* Botones de editar/eliminar - SOLO ADMIN */}
+      {/* Botones solo admin */}
       {isAdmin && (
         <HStack position="absolute" top={2} right={2} spacing={1} zIndex={10}>
           <IconButton
@@ -101,6 +102,9 @@ export default function ProductCard({ product, onEdit, onDelete }) {
         </HStack>
       )}
 
+      {/* ============================ */}
+      {/* 📌 IMAGEN DEL PRODUCTO */}
+      {/* ============================ */}
       <Image
         src={product.image}
         alt={product.name}
@@ -110,7 +114,29 @@ export default function ProductCard({ product, onEdit, onDelete }) {
         mb={4}
         borderRadius="md"
       />
-      
+
+      {/* ============================ */}
+      {/* 🔥 VISOR STL DESDE SUPABASE */}
+      {/* ============================ */}
+      {product.stlFile && (
+        <Box
+          height="250px"
+          width="100%"
+          bg="black"
+          borderRadius="md"
+          mb={4}
+          onClick={(e) => e.stopPropagation()} // evita navegar al hacer click en el viewer
+        >
+          <StlViewer
+            url={product.stlFile}
+            style={{ width: "100%", height: "100%" }}
+          />
+        </Box>
+      )}
+
+      {/* ============================ */}
+      {/* INFO DEL PRODUCTO */}
+      {/* ============================ */}
       <VStack align="start" spacing={2}>
         <Text fontWeight="bold" fontSize="lg" noOfLines={1} color="white">
           {product.name}
@@ -121,14 +147,15 @@ export default function ProductCard({ product, onEdit, onDelete }) {
         <Text fontWeight="bold" color="#a3aaffff" fontSize="xl">
           ${product.price}
         </Text>
+
         <Button
           colorScheme="teal"
           width="100%"
           onClick={handleAddToCart}
           size="lg"
-          color="white" 
-          bg="#5c212b"  
-          _hover={{ bg:"#6d6c6c73", transform: "scale(1.05)"}}
+          color="white"
+          bg="#5c212b"
+          _hover={{ bg:"#6d6c6c73", transform: "scale(1.05)" }}
         >
           🛒 Agregar al Carrito
         </Button>

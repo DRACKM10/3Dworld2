@@ -395,3 +395,43 @@ export default function HomePage() {
     </Box>
   );
 }
+const handleDeleteProduct = async (id, e) => {
+  e.stopPropagation();
+  
+  const token = localStorage.getItem("token");
+  console.log("🔐 Token:", token ? "Existe" : "NO EXISTE");
+  console.log("🗑️ Intentando eliminar producto ID:", id);
+  
+  if (!confirm("¿Estás seguro de eliminar este producto?")) return;
+
+  try {
+    const response = await fetch(`http://localhost:8000/api/products/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log("📥 Status de eliminación:", response.status);
+    const responseText = await response.text();
+    console.log("📦 Respuesta del servidor:", responseText);
+
+    if (!response.ok) throw new Error(`Error ${response.status}: ${responseText}`);
+
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+    setFilteredProducts((prev) => prev.filter((p) => p.id !== id));
+    
+    toast({
+      title: "✅ Producto eliminado",
+      status: "success",
+      duration: 2000,
+    });
+  } catch (err) {
+    console.error("❌ Error completo:", err);
+    toast({
+      title: "❌ Error",
+      description: err.message,
+      status: "error",
+    });
+  }
+};

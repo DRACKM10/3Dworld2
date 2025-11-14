@@ -32,13 +32,11 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
   const [previewImage, setPreviewImage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Estados para STL
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [uploadedSTL, setUploadedSTL] = useState(null);
   const [uploadingSTL, setUploadingSTL] = useState(false);
 
   const toast = useToast();
 
-  // Cargar datos si es edición
   useEffect(() => {
     if (editProduct) {
       setFormData({
@@ -49,131 +47,115 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
         stock: editProduct.stock || "",
       });
       setPreviewImage(editProduct.image || "");
+
       if (editProduct.stlFile) {
-        setUploadedFiles([{ name: editProduct.stlFile.split("/").pop(), url: editProduct.stlFile }]);
+        setUploadedSTL({
+          name: editProduct.stlFile.split("/").pop(),
+          url: editProduct.stlFile,
+          size: "N/A",
+          type: "STL"
+        });
       }
     } else {
       setFormData({ name: "", description: "", price: "", category: "", stock: "" });
       setImage(null);
       setPreviewImage("");
-      setUploadedFiles([]);
+      setUploadedSTL(null);
     }
   }, [editProduct, isOpen]);
 
   const handleInputChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (!file.type.startsWith("image/")) {
-        toast({
-          title: "Error",
-          description: "Solo se permiten archivos de imagen",
-          status: "error",
-        });
-        return;
-      }
-      setImage(file);
-      const reader = new FileReader();
-      reader.onload = (e) => setPreviewImage(e.target.result);
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Error",
+        description: "Solo imágenes",
+        status: "error",
+      });
+      return;
     }
+
+    setImage(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setPreviewImage(ev.target.result);
+    reader.readAsDataURL(file);
   };
 
-  // ✅ Subir archivo STL a Supabase (a través del backend)
-  // 🧠 Versión con logs de depuración
-const handleSTLUpload = async (e) => {
-  console.log("➡️ [FRONT] Iniciando subida STL...");
+  const handleSTLUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const file = e.target.files[0];
-  if (!file) {
-    console.log("⚠️ [FRONT] No se seleccionó ningún archivo");
-    return;
-  }
-
-  console.log("📁 [FRONT] Archivo seleccionado:", file.name, "-", file.size, "bytes");
-
-  if (!["stl", "obj", "gcode"].some((ext) => file.name.toLowerCase().endsWith(ext))) {
-    console.warn("❌ [FRONT] Tipo de archivo no permitido:", file.name);
-    toast({
-      title: "Error",
-      description: "Solo se permiten archivos STL, OBJ o GCODE",
-      status: "error",
-    });
-    return;
-  }
-
-  setUploadingSTL(true);
-
-  try {
-    const formData = new FormData();
-    formData.append("stl", file);
-    formData.append("productId", editProduct?.id || "temp");
-
-    const token = localStorage.getItem("token");
-    const url = "http://localhost:8000/api/products/upload-stl";
-
-    console.log("🌍 [FRONT] Enviando fetch a:", url);
-    console.log("📦 [FRONT] FormData keys:", [...formData.keys()]);
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: token ? `Bearer ${token}` : undefined,
-        // ⚠️ No pongas Content-Type manualmente
-      },
-      body: formData,
-    });
-
-    console.log("📥 [FRONT] Respuesta recibida. Status:", response.status);
-
-    // Obtener respuesta como texto (para capturar posibles errores de formato)
-    const raw = await response.text();
-    console.log("📦 [FRONT] Respuesta cruda del servidor:", raw);
-
-    if (!response.ok) {
-      throw new Error(`Error en backend (${response.status}): ${raw}`);
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (!["stl", "obj", "gcode"].includes(ext)) {
+      toast({
+        title: "Error",
+        description: "Solo STL / OBJ / GCODE",
+        status: "error",
+      });
+      e.target.value = "";
+      return;
     }
 
-    // Intentar parsear JSON
-    let data;
+    if (file.size > 20 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "Máximo 20MB",
+        status: "error",
+      });
+      e.target.value = "";
+      return;
+    }
+
+    setUploadingSTL(true);
+
     try {
-      data = JSON.parse(raw);
-    } catch (err) {
-      console.error("💀 [FRONT] Error parseando JSON:", err);
-      throw new Error("El backend no devolvió JSON válido");
+      const fd = new FormData();
+      fd.append("stl", file);
+      fd.append("productId", editProduct?.id || "temp");
+
+      const token = localStorage.getItem("token");
+
+      const response = await fetch("http://localhost:8000/api/products/upload-stl", {
+        method: "POST",
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
+        body: fd,
+      });
+
+      if (!response.ok) throw new Error(await response.text());
+
+      const data = await response.json();
+      setUploadedSTL(data.file);
+
+      toast({
+        title: "Archivo subido",
+        status: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Error al subir",
+        description: error.message,
+        status: "error",
+      });
+      e.target.value = "";
+    } finally {
+      setUploadingSTL(false);
     }
-
-    console.log("✅ [FRONT] Respuesta parseada correctamente:", data);
-
-    setUploadedFiles([data.file]);
-
-    toast({
-      title: "✅ Archivo subido correctamente",
-      description: file.name,
-      status: "success",
-    });
-  } catch (error) {
-    console.error("💀 [FRONT] Error durante la subida:", error);
-    toast({
-      title: "❌ Error",
-      description: error.message,
-      status: "error",
-    });
-  } finally {
-    setUploadingSTL(false);
-  }
-};
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.name || !formData.price) {
       toast({
-        title: "Error",
-        description: "Nombre y precio son requeridos",
+        title: "Campos requeridos",
         status: "error",
       });
       return;
@@ -181,8 +163,7 @@ const handleSTLUpload = async (e) => {
 
     if (!editProduct && !image) {
       toast({
-        title: "Error",
-        description: "La imagen es requerida",
+        title: "La imagen es requerida",
         status: "error",
       });
       return;
@@ -191,20 +172,22 @@ const handleSTLUpload = async (e) => {
     setIsLoading(true);
 
     try {
-      const submitData = new FormData();
-      submitData.append("name", formData.name);
-      submitData.append("description", formData.description);
-      submitData.append("price", formData.price);
-      submitData.append("category", formData.category);
-      submitData.append("stock", formData.stock);
+      const fd = new FormData();
+      fd.append("name", formData.name);
+      fd.append("description", formData.description);
+      fd.append("price", formData.price);
+      fd.append("category", formData.category);
+      fd.append("stock", formData.stock);
 
-      if (image) submitData.append("image", image);
-      if (editProduct && !image) submitData.append("currentImage", editProduct.image);
-      if (uploadedFiles.length > 0) submitData.append("stlFile", uploadedFiles[0].url); // ✅ STL URL
+      if (image) fd.append("image", image);
+      else if (editProduct) fd.append("currentImage", editProduct.image);
+
+      if (uploadedSTL) fd.append("stlFile", uploadedSTL.url);
 
       const url = editProduct
         ? `http://localhost:8000/api/products/${editProduct.id}`
         : "http://localhost:8000/api/products";
+
       const method = editProduct ? "PUT" : "POST";
 
       const token = localStorage.getItem("token");
@@ -214,34 +197,29 @@ const handleSTLUpload = async (e) => {
         headers: {
           Authorization: token ? `Bearer ${token}` : undefined,
         },
-        body: submitData,
+        body: fd,
       });
 
-      const resultText = await response.text();
-      let result;
-      try {
-        result = JSON.parse(resultText);
-      } catch {
-        throw new Error("El servidor no devolvió un JSON válido");
-      }
+      const raw = await response.text();
+      const result = JSON.parse(raw);
 
-      if (!response.ok) throw new Error(result.error || "Error al crear producto");
+      if (!response.ok) throw new Error(result.error);
 
       onAddProduct(result.product);
+
       toast({
-        title: editProduct ? "✅ Producto actualizado" : "✅ Producto creado",
-        description: `El producto se ${editProduct ? "actualizó" : "agregó"} exitosamente`,
+        title: editProduct ? "Producto actualizado" : "Producto creado",
         status: "success",
       });
 
       setFormData({ name: "", description: "", price: "", category: "", stock: "" });
       setImage(null);
       setPreviewImage("");
-      setUploadedFiles([]);
+      setUploadedSTL(null);
       onClose();
     } catch (error) {
       toast({
-        title: "❌ Error",
+        title: "Error",
         description: error.message,
         status: "error",
       });
@@ -253,7 +231,7 @@ const handleSTLUpload = async (e) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent bg="gray.900" color="white">
         <ModalHeader>{editProduct ? "Editar" : "Agregar"} Producto</ModalHeader>
         <ModalCloseButton />
         <form onSubmit={handleSubmit}>
@@ -261,123 +239,62 @@ const handleSTLUpload = async (e) => {
             <VStack spacing={4}>
               <FormControl isRequired>
                 <FormLabel>Nombre</FormLabel>
-                <Input
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  bg="blackAlpha.400"
-                />
+                <Input name="name" value={formData.name} onChange={handleInputChange} bg="blackAlpha.400" />
               </FormControl>
 
               <FormControl>
                 <FormLabel>Descripción</FormLabel>
-                <Textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  bg="blackAlpha.400"
-                />
+                <Textarea name="description" value={formData.description} onChange={handleInputChange} bg="blackAlpha.400" />
               </FormControl>
 
               <FormControl isRequired>
                 <FormLabel>Precio</FormLabel>
-                <Input
-                  name="price"
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  bg="blackAlpha.400"
-                />
+                <Input type="number" name="price" value={formData.price} onChange={handleInputChange} bg="blackAlpha.400" />
               </FormControl>
 
               <FormControl>
                 <FormLabel>Categoría</FormLabel>
-                <Input
-                  name="category"
-                  value={formData.category}
-                  onChange={handleInputChange}
-                  bg="blackAlpha.400"
-                />
+                <Input name="category" value={formData.category} onChange={handleInputChange} bg="blackAlpha.400" />
               </FormControl>
 
               <FormControl>
                 <FormLabel>Stock</FormLabel>
-                <Input
-                  name="stock"
-                  type="number"
-                  value={formData.stock}
-                  onChange={handleInputChange}
-                  bg="blackAlpha.400"
-                />
+                <Input type="number" name="stock" value={formData.stock} onChange={handleInputChange} bg="blackAlpha.400" />
               </FormControl>
 
               <FormControl isRequired={!editProduct}>
-                <FormLabel>
-                  Imagen {editProduct && "(dejar vacío para mantener actual)"}
-                </FormLabel>
+                <FormLabel>Imagen</FormLabel>
                 <Input type="file" accept="image/*" onChange={handleImageChange} />
               </FormControl>
 
               {previewImage && (
                 <Box>
-                  <Image src={previewImage} alt="Preview" maxH="200px" />
-                  <Box fontSize="sm" color="green.600">
-                    ✅ {image ? "Nueva imagen" : "Imagen actual"}
-                  </Box>
+                  <Image src={previewImage} maxH="200px" alt="Preview" />
                 </Box>
               )}
 
-              {/* ✅ Input STL */}
               <FormControl>
-                <FormLabel>Archivo 3D (STL / OBJ / GCODE)</FormLabel>
-                <Input
-                  type="file"
-                  accept=".stl,.obj,.gcode"
-                  onChange={handleSTLUpload}
-                  isDisabled={uploadingSTL}
-                />
-                {uploadingSTL && (
-                  <Text fontSize="sm" color="blue.400">
-                    Subiendo archivo...
-                  </Text>
-                )}
+                <FormLabel>Archivo 3D (STL/OBJ/GCODE)</FormLabel>
+                <Input type="file" accept=".stl,.obj,.gcode" onChange={handleSTLUpload} disabled={uploadingSTL} />
               </FormControl>
 
-              {uploadedFiles.length > 0 && (
-                <Box width="100%">
-                  <Text fontWeight="bold" mb={2}>
-                    Archivo 3D subido:
-                  </Text>
-                  <Box p={2} bg="gray.700" borderRadius="md">
-                    <Text fontSize="sm">📁 {uploadedFiles[0].name}</Text>
-                    <Text fontSize="xs" color="gray.400">
-                      {uploadedFiles[0].type} - {uploadedFiles[0].size} MB
-                    </Text>
-                  </Box>
+              {uploadedSTL && (
+                <Box bg="gray.700" p={3} borderRadius="md" width="100%">
+                  <Text>Archivo cargado: {uploadedSTL.name}</Text>
+                  <Button colorScheme="red" size="xs" mt={2} onClick={() => setUploadedSTL(null)}>
+                    Eliminar archivo
+                  </Button>
                 </Box>
               )}
             </VStack>
           </ModalBody>
 
           <ModalFooter>
-            <Button
-              bg="#646464ff"
-              _hover={{ bg: "#a1a1a1ff" }}
-              variant="outline"
-              mr={3}
-              onClick={onClose}
-            >
+            <Button mr={3} onClick={onClose} isDisabled={isLoading || uploadingSTL}>
               Cancelar
             </Button>
-            <Button
-              bg="#5c212b"
-              color="white"
-              type="submit"
-              isLoading={isLoading}
-              _hover={{ bg: "#333333" }}
-            >
-              {editProduct ? "Actualizar" : "Crear"} Producto
+            <Button type="submit" colorScheme="red" isLoading={isLoading} isDisabled={uploadingSTL}>
+              {editProduct ? "Actualizar" : "Crear"}
             </Button>
           </ModalFooter>
         </form>

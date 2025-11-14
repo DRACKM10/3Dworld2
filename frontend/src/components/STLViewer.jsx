@@ -1,80 +1,83 @@
 "use client";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
-import { STLLoader } from "three/examples/jsm/loaders/STLLoader";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { Box } from "@chakra-ui/react";
+import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 
 export default function STLViewer({ url }) {
   const mountRef = useRef(null);
 
   useEffect(() => {
-    const container = mountRef.current;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+    if (!url) return;
 
-    // 🎨 Crear escena, cámara y renderizador
+    const width = mountRef.current.clientWidth;
+    const height = 400;
+
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf0f0f0);
+    scene.background = new THREE.Color("#000");
 
-    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-    camera.position.set(3, 3, 5);
+    const camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+    camera.position.set(100, 100, 200);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(width, height);
-    container.appendChild(renderer.domElement);
+    mountRef.current.innerHTML = "";
+    mountRef.current.appendChild(renderer.domElement);
 
-    // 💡 Luces
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(1, 1, 1);
-    scene.add(light);
-    scene.add(new THREE.AmbientLight(0x404040));
+    // luces
+    const light1 = new THREE.DirectionalLight(0xffffff, 1);
+    light1.position.set(1, 1, 1);
+    scene.add(light1);
 
-    // 📦 Cargar STL
+    const light2 = new THREE.AmbientLight(0xffffff, 0.3);
+    scene.add(light2);
+
     const loader = new STLLoader();
-    loader.load(url, (geometry) => {
-      const material = new THREE.MeshPhongMaterial({ color: 0x5588ff });
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.rotation.x = -Math.PI / 2;
-      scene.add(mesh);
-    });
 
-    // 🖱️ Controles
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
+    loader.load(
+      url,
+      (geometry) => {
+        const material = new THREE.MeshStandardMaterial({
+          color: 0xdddddd,
+          metalness: 0.1,
+          roughness: 0.7,
+        });
 
-    // 🎬 Animación
-    const animate = () => {
-      requestAnimationFrame(animate);
-      controls.update();
-      renderer.render(scene, camera);
-    };
-    animate();
+        const mesh = new THREE.Mesh(geometry, material);
+        geometry.center();
+        mesh.rotation.x = -Math.PI / 2;
 
-    // 🔁 Ajuste de tamaño
-    const handleResize = () => {
-      const newWidth = container.clientWidth;
-      const newHeight = container.clientHeight;
-      camera.aspect = newWidth / newHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(newWidth, newHeight);
-    };
-    window.addEventListener("resize", handleResize);
+        scene.add(mesh);
+
+        const animate = () => {
+          requestAnimationFrame(animate);
+          mesh.rotation.z += 0.01;
+          renderer.render(scene, camera);
+        };
+
+        animate();
+      },
+      undefined,
+      (error) => {
+        console.error("❌ Error cargando STL:", error);
+      }
+    );
 
     return () => {
-      container.removeChild(renderer.domElement);
-      window.removeEventListener("resize", handleResize);
+      mountRef.current.innerHTML = "";
+      renderer.dispose();
     };
   }, [url]);
 
   return (
-    <Box
+    <div
       ref={mountRef}
-      width="100%"
-      height="500px"
-      borderRadius="lg"
-      boxShadow="lg"
-      bg="gray.100"
+      style={{
+        width: "100%",
+        height: "400px",
+        borderRadius: "8px",
+        overflow: "hidden",
+        background: "#111",
+      }}
     />
   );
 }

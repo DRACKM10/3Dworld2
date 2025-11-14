@@ -11,14 +11,14 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { useParams, useRouter } from "next/navigation";
-import { useCart } from "../../../context/CartContext"; 
+import { useCart } from "../../../context/CartContext";
 import STLViewer from "@/components/STLViewer";
 
 export default function ProductPage() {
   const { id } = useParams();
   const router = useRouter();
   const toast = useToast();
-  const { addToCart } = useCart(); 
+  const { addToCart } = useCart();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -99,7 +99,7 @@ export default function ProductPage() {
                 addToCart(product);
                 toast({
                   title: "Agregado al carrito",
-                  description: `${product.name} agregado exitosamente`,
+                  description: `${product.name} agregado`,
                   status: "success",
                   duration: 1200,
                 });
@@ -124,11 +124,17 @@ export default function ProductPage() {
         </Box>
       </Flex>
 
-      {/* ✅ Vista 3D del modelo */}
       {product.stlFile && (
         <Box mt={10}>
           <Heading size="md" mb={3} color="white">Vista 3D del producto</Heading>
-          <STLViewer url={product.stlFile} />
+
+          <STLViewer
+            url={
+              product.stlFile.startsWith("http")
+                ? product.stlFile
+                : `http://localhost:8000${product.stlFile}`
+            }
+          />
         </Box>
       )}
     </Box>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Flex, Button, Box, Heading, Text } from "@chakra-ui/react";
+import { useSearchParams, useRouter } from 'next/navigation';
 import ProductList from "../../components/ProductList";
 import ProductFormModal from "../../components/ProductFormModal";
 import ProtectedRoute from "../../components/ProtectedRoute";
@@ -10,10 +11,41 @@ export default function ProductosAdmin() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [editProduct, setEditProduct] = useState(null);
+  
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // ✅ Detectar si viene con parámetro ?edit=ID
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (editId) {
+      console.log("🔍 Detectado producto a editar:", editId);
+      fetchProductToEdit(editId);
+    }
+  }, [searchParams]);
+
+  // ✅ Obtener producto para editar
+  const fetchProductToEdit = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/products/${id}`);
+      if (!response.ok) throw new Error("Producto no encontrado");
+      
+      const product = await response.json();
+      console.log("📦 Producto cargado para editar:", product);
+      
+      setEditProduct(product);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("❌ Error al cargar producto:", error);
+    }
+  };
 
   const handleAddOrUpdateProduct = (product) => {
     setRefreshKey(prev => prev + 1);
     console.log('✅ Producto guardado, recargando lista...');
+    
+    // ✅ Limpiar parámetros de URL
+    router.push('/productos');
   };
 
   const handleEdit = (product) => {
@@ -24,6 +56,9 @@ export default function ProductosAdmin() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditProduct(null);
+    
+    // ✅ Limpiar parámetros de URL si existen
+    router.push('/productos');
   };
 
   return (

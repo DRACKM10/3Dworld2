@@ -162,33 +162,66 @@ export const deleteProduct = async (req, res) => {
 
 // ✅ Subida de archivo STL (a bucket “models”)
 export const uploadSTLFile = async (req, res) => {
-  console.log("📤 Subiendo modelo 3D...");
+  console.log("📤 [BACK] uploadSTLFile ejecutado");
+  console.log("📦 [BACK] req.file:", req.file ? "Archivo recibido" : "NO HAY ARCHIVO");
+  console.log("📝 [BACK] req.body:", req.body);
+
   try {
-    if (!req.file) return res.status(400).json({ error: "Archivo STL requerido" });
+    if (!req.file) {
+      console.error("❌ [BACK] No se recibió archivo");
+      return res.status(400).json({ error: "Archivo STL requerido" });
+    }
 
     const productId = req.body.productId || "temp";
     const ext = req.file.originalname.split(".").pop().toLowerCase();
-    if (!["stl", "obj", "gcode"].includes(ext))
+    
+    console.log(`📁 [BACK] Archivo: ${req.file.originalname} (${ext})`);
+    
+    if (!["stl", "obj", "gcode"].includes(ext)) {
+      console.error("❌ [BACK] Extensión no permitida:", ext);
       return res.status(400).json({ error: "Solo se permiten STL, OBJ o GCODE" });
+    }
 
     const fileName = `product_${productId}_${Date.now()}.${ext}`;
     const MODEL_BUCKET = "stl-files";
 
+    console.log(`☁️ [BACK] Subiendo a Supabase: ${fileName}`);
+
     const { error: uploadError } = await supabase.storage
       .from(MODEL_BUCKET)
-      .upload(fileName, req.file.buffer, { contentType: req.file.mimetype });
-    if (uploadError) throw uploadError;
+      .upload(fileName, req.file.buffer, { 
+        contentType: req.file.mimetype,
+        upsert: false 
+      });
 
-    const { data: publicUrlData } = supabase.storage.from(MODEL_BUCKET).getPublicUrl(fileName);
+    if (uploadError) {
+      console.error("❌ [BACK] Error de Supabase:", uploadError);
+      throw uploadError;
+    }
+
+    console.log("✅ [BACK] Archivo subido exitosamente");
+
+    const { data: publicUrlData } = supabase.storage
+      .from(MODEL_BUCKET)
+      .getPublicUrl(fileName);
+    
     const fileUrl = publicUrlData.publicUrl;
     const fileSize = (req.file.size / 1024 / 1024).toFixed(2);
 
-    res.json({
+    const response = {
       success: true,
-      file: { url: fileUrl, name: req.file.originalname, size: fileSize, type: ext.toUpperCase() },
-    });
+      file: { 
+        url: fileUrl, 
+        name: req.file.originalname, 
+        size: fileSize, 
+        type: ext.toUpperCase() 
+      },
+    };
+
+    console.log("📤 [BACK] Respuesta enviada:", response);
+    res.json(response);
   } catch (err) {
-    console.error("❌ Error en uploadSTLFile:", err);
+    console.error("💀 [BACK] Error en uploadSTLFile:", err);
     res.status(500).json({ error: "Error al subir modelo 3D: " + err.message });
   }
 };
