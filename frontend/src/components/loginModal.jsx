@@ -11,7 +11,7 @@ export default function LoginModal({ isOpen, onClose, goToRegister }) {
       <ModalOverlay bg="rgba(0,0,0,0.7)" backdropFilter="blur(5px)" />
       <ModalContent bg="transparent" shadow="none">
         <ModalBody>
-          <LoginForm onClose={onClose} goToRegister={goToRegister} />
+          <LoginForm  goToRegister={goToRegister} />
         </ModalBody>
       </ModalContent>
     </Modal>

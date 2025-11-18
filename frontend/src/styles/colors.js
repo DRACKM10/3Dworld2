@@ -38,11 +38,11 @@ export const colors = {
   background: {
     main: '#ffffffff',           // Fondo principal (negro)
     secondary: '#1A1A1A',      // Fondo secundario
-    card: '#292929e0',         // Fondo de tarjetas
+    card: '#474242e0',         // Fondo de tarjetas
     dark: 'rgba(20, 20, 20, 0.85)',  // Fondo oscuro con transparencia
-    modal: 'rgba(20, 20, 20, 0.95)',  // Fondo de modales
+    modal: 'rgba(255, 255, 255, 0.79)',  // Fondo de modales
     gray: '#1e1e1e',           // Fondo gris
-    input: '#1A1A1A',          // Fondo de inputs
+    input: '#ebebebff',          // Fondo de inputs
     hover: '#18181873',        // Fondo hover
   },
 
@@ -50,9 +50,9 @@ export const colors = {
   // COLORES DE TEXTO
   // ==========================================
   text: {
-    primary: '#EDEDED',        // Texto principal (blanco)
+    primary: '#5c212b',        // Texto principal (blanco)
     secondary: '#ffffff',      // Texto secundario
-    muted: 'gray.400',         // Texto apagado
+    muted: '#6b6a6aff',         // Texto apagado
     dark: '#0F0F0F',           // Texto oscuro
     light: 'gray.300',         // Texto claro
     placeholder: 'gray.500',   // Placeholder de inputs
@@ -85,6 +85,7 @@ export const colors = {
   // ==========================================
   shadows: {
     primary: '0 0 20px #5c212b',
+    dark: '0 0 15px #0f0f0f',
     card: '0 0 10px rgba(92, 33, 43, 0.3)',
     hover: '0 0 20px rgba(163, 170, 255, 0.4)',
     glow: '0 0 10px #5c212b',

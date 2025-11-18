@@ -1,6 +1,5 @@
 "use client";
 
-import NextLink from "next/link";
 import {
   Box,
   Heading,
@@ -10,14 +9,17 @@ import {
   FormLabel,
   FormErrorMessage,
   Text,
-  Link,
   InputGroup,
   InputRightElement,
   IconButton,
+  useToast,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
 import { useAuth } from "../context/authContext";
+import { useRouter } from "next/navigation";
+import { colors } from "../styles/colors";
+import { color } from "framer-motion";
 
 export default function RegisterForm({ onClose, goToLogin }) {
   const [username, setUsername] = useState("");
@@ -29,6 +31,8 @@ export default function RegisterForm({ onClose, goToLogin }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const { register, loading } = useAuth();
+  const toast = useToast();
+  const router = useRouter();
 
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -36,145 +40,195 @@ export default function RegisterForm({ onClose, goToLogin }) {
     e.preventDefault();
     setError("");
 
-    if (!username) return setError("El nombre de usuario es obligatorio");
-    if (!validateEmail(email)) return setError("Correo inválido");
-    if (password.length < 6)
-      return setError("La contraseña debe tener al menos 6 caracteres");
-    if (password !== confirmPassword)
-      return setError("Las contraseñas no coinciden");
+    if (!username) {
+      setError("El nombre de usuario es obligatorio");
+      return;
+    }
+    if (!validateEmail(email)) {
+      setError("Correo inválido");
+      return;
+    }
+    if (password.length < 6) {
+      setError("La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Las contraseñas no coinciden");
+      return;
+    }
 
     const result = await register({
-      username,
-      email,
-      password,
+      username: username.trim(),
+      email: email.trim(),
+      password: password,
     });
 
     if (result.success) {
-      onClose(); // 🔥 Cierra el modal automáticamente
+      toast({
+        title: "✅ Registro exitoso",
+        description: "Tu cuenta ha sido creada correctamente",
+        status: "success",
+        duration: 2000,
+      });
+
+      // Cerrar modal y redirigir
+      onClose();
+      setTimeout(() => {
+        router.push("/");
+      }, 1000);
     } else {
       setError(result.error);
+      toast({
+        title: "❌ Error en registro",
+        description: result.error,
+        status: "error",
+        duration: 3000,
+      });
     }
   };
-
-  if (result.success) {
-   onClose();
-    goToLogin(); // abrir modal login
-  }
-
 
   return (
     <Box
       position="relative"
-      bg="rgba(20,20,20,0.85)"
+      bg={colors.background.modal}
       p={8}
       borderRadius="2xl"
-      boxShadow="0 0 20px #5c212b"
+      boxShadow={colors.shadows.primary}
       maxW="400px"
       width="100%"
-      color="#EDEDED"
-    >
-      {/* ❌ Botón para cerrar */}
-      {onClose && (
-        <Button
-          onClick={onClose}
-          position="absolute"
-          top="12px"
-          right="12px"
-          bg="transparent"
-          fontSize="22px"
-          color="white"
-          _hover={{ bg: "rgba(255,255,255,0.15)" }}
-        >
-          ✕
-        </Button>
-      )}
+      color={colors.text.dark}
+    >  
 
-      <Heading mb={6} textAlign="center" color="#fff" textShadow="0 0 10px #5c212b">
+      <Heading mb={6} textAlign="center" color={colors.text.primary} textShadow={colors.shadows.primary}>
         Registrarse
       </Heading>
 
       {/* FORM */}
       <form onSubmit={handleSubmit}>
         {/* Usuario */}
-        <FormControl isInvalid={error !== ""} mb={4}>
+        <FormControl isInvalid={!!error} mb={4}>
           <FormLabel>Nombre de Usuario</FormLabel>
           <Input
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            bg="#EDEDED"
-            color="#0F0F0F"
-            border="2px solid #5c212b"
+            placeholder="Ingresa tu nombre de usuario"
+            bg={colors.background.input}
+            color={colors.text.dark}
+            border={colors.borders.primary}
+            _focus={{
+              boxShadow: colors.shadows.glow,
+            }}
+            disabled={loading}
           />
         </FormControl>
 
         {/* Email */}
-        <FormControl isInvalid={error !== ""} mb={4}>
+        <FormControl isInvalid={!!error} mb={4}>
           <FormLabel>Correo Electrónico</FormLabel>
           <Input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            bg="#EDEDED"
-            color="#0F0F0F"
-            border="2px solid #5c212b"
+            placeholder="tu@email.com"
+            bg={colors.background.input}
+            color={colors.text.dark}
+            border={colors.borders.primary}
+            _focus={{ 
+              boxShadow: colors.shadows.glow,
+            }}
+            disabled={loading}
           />
         </FormControl>
 
         {/* Contraseña */}
-        <FormControl isInvalid={error !== ""} mb={4}>
+        <FormControl isInvalid={!!error} mb={4}>
           <FormLabel>Contraseña</FormLabel>
           <InputGroup>
             <Input
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              bg="#EDEDED"
-              color="#0F0F0F"
-              border="2px solid #5c212b"
+              placeholder="Mínimo 6 caracteres"
+              bg={colors.background.input}
+              color={colors.text.dark}
+              border={colors.borders.primary}
+              _focus={{ 
+                boxShadow: colors.shadows.glow,
+              }}
+              disabled={loading}
             />
             <InputRightElement>
               <IconButton
                 size="sm"
                 icon={showPassword ? <ViewOffIcon /> : <ViewIcon />}
                 onClick={() => setShowPassword(!showPassword)}
+                bg="transparent"
+                color={colors.primary.main}
+                disabled={loading}
+                aria-label="Mostrar contraseña"
               />
             </InputRightElement>
           </InputGroup>
         </FormControl>
 
         {/* Confirmación */}
-        <FormControl isInvalid={error !== ""} mb={6}>
+        <FormControl isInvalid={!!error} mb={6}>
           <FormLabel>Confirmar Contraseña</FormLabel>
           <InputGroup>
             <Input
               type={showConfirmPassword ? "text" : "password"}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              bg="#EDEDED"
-              color="#0F0F0F"
-              border="2px solid #5c212b"
+              placeholder="Confirma tu contraseña"
+              bg={colors.background.input}
+              color={colors.text.dark}
+              border={colors.borders.primary}
+              _focus={{ 
+                boxShadow: colors.shadows.glow,
+              }}
+              disabled={loading}
             />
             <InputRightElement>
               <IconButton
                 size="sm"
                 icon={showConfirmPassword ? <ViewOffIcon /> : <ViewIcon />}
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                bg="transparent"
+                color={colors.primary.main}
+                disabled={loading}
+                aria-label="Mostrar confirmación"
               />
             </InputRightElement>
           </InputGroup>
-
-          <FormErrorMessage>{error}</FormErrorMessage>
+          {error && <FormErrorMessage>{error}</FormErrorMessage>}
         </FormControl>
 
-        <Button
+        <Button 
           type="submit"
           width="full"
-          bg="#5c212b"
-          color="#EDEDED"
-          _hover={{ bg: "#6d6c6c73", transform: "scale(1.05)" }}
+          bg={colors.primary.main}
+          color={colors.text.secondary} 
+          _hover={{ bg: colors.background.card ,transform: "scale(1.05)" }}
+          transition="all 0.2s ease-in-out"
+          mb={4}
+          isLoading={loading}
+          loadingText="Registrando..."
         >
           Registrarse
         </Button>
+
+        <Text textAlign="center" fontSize="sm" color={colors.text.muted}>
+          ¿Ya tienes cuenta?{" "}
+          <Button
+            variant="link"
+            color={colors.text.primary}
+            onClick={goToLogin}
+            _hover={{ textDecoration: "underline" }}
+            fontSize="sm"
+          >
+            Inicia sesión aquí
+          </Button>
+        </Text>
       </form>
     </Box>
   );

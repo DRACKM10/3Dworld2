@@ -1,4 +1,4 @@
-// Ejemplo: frontend/src/components/header.js
+// frontend/src/components/header.js
 "use client";
 
 import {
@@ -20,15 +20,13 @@ import {
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import CartIndicator from "./CartIndicator";
-import { colors, commonStyles } from "../styles/colors"; // ← IMPORTAR AQUÍ
-import LoginModal from "./loginModal";
-import { useDisclosure } from "@chakra-ui/react";
-
- 
-
+import { colors, commonStyles } from "../styles/colors";
+import LoginModal from "./LoginModal";
+import RegisterModal from "./RegisterModal";
 
 export default function Header() {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isLoginOpen, setLoginOpen] = useState(false);
+  const [isRegisterOpen, setRegisterOpen] = useState(false);
   const [usuario, setUsuario] = useState(null);
   const [userData, setUserData] = useState(null);
   const toast = useToast();
@@ -103,12 +101,23 @@ export default function Header() {
     return "";
   };
 
+  // ✅ Funciones para cambiar entre modales
+  const openLogin = () => {
+    setRegisterOpen(false);
+    setLoginOpen(true);
+  };
+
+  const openRegister = () => {
+    setLoginOpen(false);
+    setRegisterOpen(true);
+  };
+
   return (
     <Box
       as="header"
       p={4}
-      bgGradient={colors.gradients.header}  // ← USO DEL SISTEMA DE COLORES
-      color={colors.text.primary}           // ← USO DEL SISTEMA DE COLORES
+      bgGradient={colors.gradients.header}
+      color={colors.text.primary}
       boxShadow="md"
       position="sticky"
       top={0}
@@ -126,8 +135,8 @@ export default function Header() {
         <Link href="/" style={{ textDecoration: "none" }}>
           <Heading
             size="md"
-            color={colors.text.secondary}       // ← USO DEL SISTEMA
-            _hover={{ textShadow: colors.shadows.text }} // ← USO DEL SISTEMA
+            color={colors.text.secondary}
+            _hover={{ textShadow: colors.shadows.text }}
             transition="all 0.3s ease-in-out"
           >
             3DWORLD
@@ -146,18 +155,18 @@ export default function Header() {
                   src={getAvatarSrc()}
                   size="sm"
                   cursor="pointer"
-                  border={`2px solid ${colors.text.secondary}`} // ← USO DEL SISTEMA
+                  border={`2px solid ${colors.text.secondary}`}
                   transition="all 0.2s ease-in-out"
                   _hover={{ transform: "scale(1.1)" }}
                 />
               </PopoverTrigger>
 
               <PopoverContent
-                bg={colors.background.modal}      // ← USO DEL SISTEMA
-                border={colors.borders.primary}   // ← USO DEL SISTEMA
-                color={colors.text.primary}       // ← USO DEL SISTEMA
+                bg={colors.background.modal}
+                border={colors.borders.primary}
+                color={colors.text.primary}
                 borderRadius="lg"
-                boxShadow={colors.shadows.primary} // ← USO DEL SISTEMA
+                boxShadow={colors.shadows.primary}
                 w="220px"
                 p={3}
               >
@@ -169,7 +178,7 @@ export default function Header() {
                     src={getAvatarSrc()}
                     name={usuario}
                     mb={2}
-                    border={`2px solid ${colors.primary.main}`} // ← USO DEL SISTEMA
+                    border={`2px solid ${colors.primary.main}`}
                     mx="auto"
                   />
                   <Text fontWeight="bold" fontSize="sm" mb={1}>
@@ -187,7 +196,7 @@ export default function Header() {
                     <Button
                       w="full"
                       size="sm"
-                      {...commonStyles.buttonPrimary}  // ← USO DE ESTILOS COMUNES
+                      {...commonStyles.buttonPrimary}
                       mb={2}
                     >
                       👤 Ver perfil
@@ -197,7 +206,7 @@ export default function Header() {
                   <Button
                     w="full"
                     size="sm"
-                    {...commonStyles.buttonPrimary}   // ← USO DE ESTILOS COMUNES
+                    {...commonStyles.buttonPrimary}
                     onClick={handleLogout}
                   >
                     🚪 Cerrar sesión
@@ -208,7 +217,7 @@ export default function Header() {
           ) : (
             <Box>
               <Button
-                onClick={onOpen}
+                onClick={openLogin}
                 variant="surface"
                 bg={colors.button.secondary.bg}
                 color={colors.button.secondary.color}
@@ -221,7 +230,18 @@ export default function Header() {
                 Iniciar Sesión
               </Button>
 
-              <LoginModal isOpen={isOpen} onClose={onClose} />
+              {/* ✅ Ambos modales con funciones para cambiar entre ellos */}
+              <LoginModal 
+                isOpen={isLoginOpen} 
+                onClose={() => setLoginOpen(false)} 
+                goToRegister={openRegister}
+              />
+
+              <RegisterModal
+                isOpen={isRegisterOpen}
+                onClose={() => setRegisterOpen(false)}
+                goToLogin={openLogin}
+              />
             </Box>
           )}
         </Flex>

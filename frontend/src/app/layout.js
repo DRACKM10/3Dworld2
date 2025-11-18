@@ -3,7 +3,7 @@ import { Providers } from './providers';
 import ClientLayout from '../components/ClientLayout';
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import Footer from '../components/Footer';
-import AuthModals from '@/components/AuthModal';
+import AuthModals from '../components/AuthModals';
 
  
 export const metadata = {
