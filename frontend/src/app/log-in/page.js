@@ -22,6 +22,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { GoogleLogin } from "@react-oauth/google";
+import { colors } from "../../styles/colors";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -209,7 +210,7 @@ setTimeout(() => {
       display="flex"
       alignItems="center"
       justifyContent="center"
-       
+      bg={colors.background.main}
       color="white"
     >
       <Box

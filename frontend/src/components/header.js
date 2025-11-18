@@ -1,3 +1,4 @@
+// Ejemplo: frontend/src/components/header.js
 "use client";
 
 import {
@@ -19,8 +20,15 @@ import {
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import CartIndicator from "./CartIndicator";
+import { colors, commonStyles } from "../styles/colors"; // ← IMPORTAR AQUÍ
+import LoginModal from "./loginModal";
+import { useDisclosure } from "@chakra-ui/react";
+
+ 
+
 
 export default function Header() {
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const [usuario, setUsuario] = useState(null);
   const [userData, setUserData] = useState(null);
   const toast = useToast();
@@ -35,7 +43,6 @@ export default function Header() {
             const user = JSON.parse(storedUserData);
             setUsuario(user.name);
             setUserData(user);
-            console.log("👤 Usuario cargado (nuevo sistema):", user.name);
             return;
           }
         }
@@ -43,7 +50,6 @@ export default function Header() {
         const storedUserName = localStorage.getItem("usuario");
         if (storedUserName) {
           setUsuario(storedUserName);
-          console.log("👤 Usuario cargado (sistema antiguo):", storedUserName);
         }
       } catch (error) {
         console.error("Error loading user:", error);
@@ -101,8 +107,8 @@ export default function Header() {
     <Box
       as="header"
       p={4}
-      bgGradient="linear(to-r, #5c212bff, #5c212b)"
-      color="#EDEDED"
+      bgGradient={colors.gradients.header}  // ← USO DEL SISTEMA DE COLORES
+      color={colors.text.primary}           // ← USO DEL SISTEMA DE COLORES
       boxShadow="md"
       position="sticky"
       top={0}
@@ -116,25 +122,22 @@ export default function Header() {
         flexWrap="wrap"
         gap={3}
       >
-        {/* 🔹 Logo */}
+        {/* Logo */}
         <Link href="/" style={{ textDecoration: "none" }}>
           <Heading
             size="md"
-            color="#ffffffff"
-            _hover={{ textShadow: "0 0 10px #000000ff" }}
+            color={colors.text.secondary}       // ← USO DEL SISTEMA
+            _hover={{ textShadow: colors.shadows.text }} // ← USO DEL SISTEMA
             transition="all 0.3s ease-in-out"
           >
             3DWORLD
           </Heading>
         </Link>
 
-        {/* 🔹 Menú de navegación */}
+        {/* Menú de navegación */}
         <Flex gap={4} flexWrap="wrap" align="center">
-
-          {/* 🔹 Carrito */}
           <CartIndicator />
 
-          {/* 🔹 Usuario logueado o no */}
           {usuario ? (
             <Popover placement="bottom-end">
               <PopoverTrigger>
@@ -143,38 +146,37 @@ export default function Header() {
                   src={getAvatarSrc()}
                   size="sm"
                   cursor="pointer"
-                  border="2px solid #ffffff"
+                  border={`2px solid ${colors.text.secondary}`} // ← USO DEL SISTEMA
                   transition="all 0.2s ease-in-out"
                   _hover={{ transform: "scale(1.1)" }}
                 />
               </PopoverTrigger>
 
               <PopoverContent
-                bg="#130000ff"
-                border="1px solid #ffffffff"
-                color="#EDEDED"
+                bg={colors.background.modal}      // ← USO DEL SISTEMA
+                border={colors.borders.primary}   // ← USO DEL SISTEMA
+                color={colors.text.primary}       // ← USO DEL SISTEMA
                 borderRadius="lg"
-                boxShadow="0 0 20px rgba(255, 255, 255, 0.3)"
+                boxShadow={colors.shadows.primary} // ← USO DEL SISTEMA
                 w="220px"
                 p={3}
               >
-                <PopoverArrow bg="#ffffffff" />
-                <PopoverCloseButton color="#fff" />
+                <PopoverArrow bg={colors.text.secondary} />
+                <PopoverCloseButton color={colors.text.secondary} />
                 <PopoverBody textAlign="center">
-                  {/* Avatar dentro del popover */}
                   <Avatar
                     size="lg"
                     src={getAvatarSrc()}
                     name={usuario}
                     mb={2}
-                    border="2px solid #5c212b"
+                    border={`2px solid ${colors.primary.main}`} // ← USO DEL SISTEMA
                     mx="auto"
                   />
                   <Text fontWeight="bold" fontSize="sm" mb={1}>
                     {usuario}
                   </Text>
                   {userData?.email && (
-                    <Text fontSize="xs" color="gray.400" mb={2}>
+                    <Text fontSize="xs" color={colors.text.muted} mb={2}>
                       {userData.email}
                     </Text>
                   )}
@@ -185,14 +187,7 @@ export default function Header() {
                     <Button
                       w="full"
                       size="sm"
-                      bg="#5c212b"
-                      color="#EDEDED"
-                      borderColor="#5c212b"
-                      _hover={{
-                        bg: "#18181873",
-                        transform: "scale(1.05)",
-                      }}
-                      transition="all 0.2s ease-in-out"
+                      {...commonStyles.buttonPrimary}  // ← USO DE ESTILOS COMUNES
                       mb={2}
                     >
                       👤 Ver perfil
@@ -202,14 +197,7 @@ export default function Header() {
                   <Button
                     w="full"
                     size="sm"
-                    bg="#5c212b"
-                    color="#EDEDED"
-                    borderColor="#5c212b"
-                    _hover={{
-                      bg: "#18181873",
-                      transform: "scale(1.05)",
-                    }}
-                    transition="all 0.2s ease-in-out"
+                    {...commonStyles.buttonPrimary}   // ← USO DE ESTILOS COMUNES
                     onClick={handleLogout}
                   >
                     🚪 Cerrar sesión
@@ -218,21 +206,23 @@ export default function Header() {
               </PopoverContent>
             </Popover>
           ) : (
-            <Link href="/log-in" style={{ textDecoration: "none" }}>
+            <Box>
               <Button
+                onClick={onOpen}
                 variant="surface"
-                color="#EDEDED"
-                bg="blackAlpha.700"
-                borderColor="#000000ff"
+                bg={colors.button.secondary.bg}
+                color={colors.button.secondary.color}
                 _hover={{
-                  bg: "#18181873",
+                  bg: colors.button.secondary.hover,
                   transform: "scale(1.05)",
                 }}
                 transition="all 0.2s ease-in-out"
               >
                 Iniciar Sesión
               </Button>
-            </Link>
+
+              <LoginModal isOpen={isOpen} onClose={onClose} />
+            </Box>
           )}
         </Flex>
       </Flex>

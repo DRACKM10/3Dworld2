@@ -172,15 +172,15 @@ export default function HomePage() {
   }
 
   return (
-    <Box minH="100vh" p={4}>
+    <Box minH="100vh" p={4} bg="#ffffff">
       <Box maxW="1400px" mx="auto">
         {/* Header */}
-        <Box mb={8} textAlign="center">
+        <Box mb={8} textAlign="center"  >
           <Heading 
             color="white" 
             size="2xl" 
             mb={2}
-            bgGradient="linear(to-r, #5c212b, #a3aaffff)"
+            bg="#5c212b"
             bgClip="text"
           >
             Bienvenido a 3Dworld
@@ -312,7 +312,7 @@ export default function HomePage() {
                   objectFit="contain"
                   mb={4}
                   borderRadius="md"
-                  bg="black"
+                   
                 />
 
                 <VStack align="start" spacing={2}>

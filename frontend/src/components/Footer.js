@@ -1,52 +1,159 @@
-import { Box, Text } from "@chakra-ui/react";
+"use client";
+
+import {
+  Box,
+  Flex,
+  Text,
+  IconButton,
+  Link as ChakraLink,
+  Divider,
+} from "@chakra-ui/react";
+import Link from "next/link";
+
+// React Icons válidos
+import {
+  FaFacebookF,
+  FaTwitter,
+  FaYoutube,
+  FaInstagram,
+  FaGithub,
+} from "react-icons/fa";
 
 export default function Footer() {
   return (
-    <div container="footer">
-      <Box
-        as="footer"
-        textAlign="center"
-        color="white"
-        bgGradient="linear(to-r, #0b2b33, #0f0f0f)"
-        py={5}
-      >
-        <Text>© 3Dworld - Todos los derechos reservados</Text>
-        <Text>Contacto: 3Dworld@gmail.com | Tel: +57 (312) 274-7116</Text>
-        <Text>Dirección: Carrera 7 #1-13, Ginebra, Colombia</Text>
+    <Box bg="#111111" color="white" py={10} px={8} mt={20}>
+      <Divider borderColor="gray.700" mb={8} />
 
-        <Text>
-          Síguenos:{" "}
-          <a
-            href="https://twitter.com/miempresa"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              color: "white",
-              textDecoration: "none",
-              transition: "color 0.3s ease",
-            }}
-            onMouseOver={(e) => (e.target.style.color = "#9B4DFF")}
-            onMouseOut={(e) => (e.target.style.color = "white")}
-          >
-            Twitter
-          </a>{" "}
-          |{" "}
-          <a
-            href="https://facebook.com/miempresa"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              color: "white",
-              textDecoration: "none",
-              transition: "color 0.3s ease",
-            }}
-            onMouseOver={(e) => (e.target.style.color = "#9B4DFF")}
-            onMouseOut={(e) => (e.target.style.color = "white")}
-          >
-            Facebook
-          </a>
-        </Text>
-      </Box>
-    </div>
+      <Flex
+        justify="space-between"
+        align="flex-start"
+        direction={{ base: "column", md: "row" }}
+        gap={10}
+      >
+        <Flex direction="column" maxW="300px">
+          <Text fontSize="2xl" fontWeight="bold">
+            MiSitio
+          </Text>
+          <Text fontSize="sm" mt={2} color="gray.400">
+            Plataforma creada para ofrecer contenido útil, herramientas y
+            recursos.
+          </Text>
+        </Flex>
+
+        <Flex gap={20}>
+          <Flex direction="column" gap={3}>
+            <Text fontWeight="bold" mb={1}>
+              Recursos
+            </Text>
+
+            <Link href="/sobre-mi" passHref>
+              <ChakraLink fontSize="sm" color="gray.300" _hover={{ color: "white" }}>
+                Sobre mí
+              </ChakraLink>
+            </Link>
+
+            <Link href="/contacto" passHref>
+              <ChakraLink fontSize="sm" color="gray.300" _hover={{ color: "white" }}>
+                Contacto
+              </ChakraLink>
+            </Link>
+
+            <Link href="/privacidad" passHref>
+              <ChakraLink fontSize="sm" color="gray.300" _hover={{ color: "white" }}>
+                Privacidad
+              </ChakraLink>
+            </Link>
+          </Flex>
+
+          <Flex direction="column" gap={3}>
+            <Text fontWeight="bold" mb={1}>
+              Soporte
+            </Text>
+
+            <Link href="/faq" passHref>
+              <ChakraLink fontSize="sm" color="gray.300" _hover={{ color: "white" }}>
+                Preguntas Frecuentes
+              </ChakraLink>
+            </Link>
+
+            <Link href="/ayuda" passHref>
+              <ChakraLink fontSize="sm" color="gray.300" _hover={{ color: "white" }}>
+                Centro de Ayuda
+              </ChakraLink>
+            </Link>
+
+            <Link href="/terminos" passHref>
+              <ChakraLink fontSize="sm" color="gray.300" _hover={{ color: "white" }}>
+                Términos y Condiciones
+              </ChakraLink>
+            </Link>
+          </Flex>
+        </Flex>
+
+        <Flex direction="column" gap={3}>
+          <Text fontWeight="bold" mb={1}>
+            Síguenos
+          </Text>
+
+          <Flex gap={3}>
+            <IconButton
+              as="a"
+              href="#"
+              icon={<FaFacebookF />}
+              aria-label="Facebook"
+              variant="ghost"
+              color="white"
+              _hover={{ bg: "gray.700" }}
+            />
+
+            <IconButton
+              as="a"
+              href="#"
+              icon={<FaTwitter />}
+              aria-label="Twitter"
+              variant="ghost"
+              color="white"
+              _hover={{ bg: "gray.700" }}
+            />
+
+            <IconButton
+              as="a"
+              href="#"
+              icon={<FaYoutube />}
+              aria-label="YouTube"
+              variant="ghost"
+              color="white"
+              _hover={{ bg: "gray.700" }}
+            />
+
+            <IconButton
+              as="a"
+              href="#"
+              icon={<FaInstagram />}
+              aria-label="Instagram"
+              variant="ghost"
+              color="white"
+              _hover={{ bg: "gray.700" }}
+            />
+
+            <IconButton
+              as="a"
+              href="#"
+              icon={<FaGithub />}
+              aria-label="Github"
+              variant="ghost"
+              color="white"
+              _hover={{ bg: "gray.700" }}
+            />
+          </Flex>
+        </Flex>
+      </Flex>
+
+      <Divider borderColor="gray.700" mt={10} mb={5} />
+
+      <Text fontSize="sm" textAlign="center" color="gray.500">
+        © {new Date().getFullYear()} MiSitio — Todos los derechos reservados.
+      </Text>
+    </Box>
   );
 }
