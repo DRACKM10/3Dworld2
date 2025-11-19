@@ -50,7 +50,7 @@ export const getProductById = async (id) => {
  * Crear nuevo producto
  */
 export const createProduct = async (product) => {
-  const { name, description, price, image, category, stock } = product;
+  const { name, description, price, image, category, stock, stlFile } = product;
 
   try {
     const { data, error } = await supabase
@@ -63,6 +63,7 @@ export const createProduct = async (product) => {
           image,
           category,
           stock: stock || 0,
+          stl_file: stlFile || null, // ✅ NUEVO CAMPO
           is_active: true
         }
       ])
@@ -83,7 +84,7 @@ export const createProduct = async (product) => {
  * Actualizar producto por ID
  */
 export const updateProductById = async (id, product) => {
-  const { name, description, price, image, category, stock } = product;
+  const { name, description, price, image, category, stock, stlFile } = product;
 
   try {
     const { data, error } = await supabase
@@ -95,6 +96,7 @@ export const updateProductById = async (id, product) => {
         image,
         category,
         stock,
+        stl_file: stlFile || null, // ✅ NUEVO CAMPO
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
@@ -138,5 +140,30 @@ export const deleteProductById = async (id) => {
   } catch (error) {
     console.error('❌ Error en deleteProductById:', error);
     throw new Error(`Error al eliminar producto: ${error.message}`);
+  }
+};
+
+/**
+ * ✅ NUEVA FUNCIÓN: Actualizar solo el STL de un producto
+ */
+export const updateProductSTL = async (id, stlFileUrl) => {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .update({ 
+        stl_file: stlFileUrl,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    console.log('✅ STL actualizado para producto:', id);
+    return data;
+  } catch (error) {
+    console.error('❌ Error en updateProductSTL:', error);
+    throw new Error(`Error al actualizar STL: ${error.message}`);
   }
 };

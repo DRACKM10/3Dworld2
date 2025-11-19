@@ -4,7 +4,8 @@ import {
   getProductById, 
   createProduct,
   updateProductById,
-  deleteProductById
+  deleteProductById,
+  updateProductSTL // ✅ NUEVA IMPORTACIÓN
 } from "../models/productModel.js";
 import { supabase, BUCKET_NAME } from "../config/supabase.js";
 import multer from "multer";
@@ -24,7 +25,6 @@ export const upload = multer({
   },
 });
 
-
 // ✅ Obtener todos los productos
 export const getProducts = async (req, res) => {
   try {
@@ -35,7 +35,6 @@ export const getProducts = async (req, res) => {
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };
-
 
 // ✅ Obtener producto por ID
 export const getProduct = async (req, res) => {
@@ -50,7 +49,6 @@ export const getProduct = async (req, res) => {
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };
-
 
 // ✅ Crear nuevo producto
 export const addProduct = async (req, res) => {
@@ -94,7 +92,6 @@ export const addProduct = async (req, res) => {
   }
 };
 
-
 // ✅ Actualizar producto
 export const updateProduct = async (req, res) => {
   console.log("📝 Actualizando producto...");
@@ -123,7 +120,7 @@ export const updateProduct = async (req, res) => {
       image: imageUrl,
       category: category || "General",
       stock: stock ? parseInt(stock) : 0,
-      stlFile: stlFile || null, // ✅ nuevo campo
+      stlFile: stlFile || null, // ✅ Nuevo campo
     };
 
     const updated = await updateProductById(id, productData);
@@ -135,7 +132,6 @@ export const updateProduct = async (req, res) => {
     res.status(500).json({ error: "Error al actualizar producto: " + err.message });
   }
 };
-
 
 // ✅ Eliminar producto
 export const deleteProduct = async (req, res) => {
@@ -159,8 +155,34 @@ export const deleteProduct = async (req, res) => {
   }
 };
 
+// ✅ NUEVA FUNCIÓN: Actualizar STL de producto existente
+export const updateProductSTLFile = async (req, res) => {
+  console.log("📤 Actualizando STL del producto...");
+  try {
+    const id = parseInt(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: "ID inválido" });
 
-// ✅ Subida de archivo STL (a bucket “models”)
+    const { stlFile } = req.body;
+
+    if (!stlFile) {
+      return res.status(400).json({ error: "URL del STL es requerida" });
+    }
+
+    const updated = await updateProductSTL(id, stlFile);
+    if (!updated) return res.status(404).json({ error: "Producto no encontrado" });
+
+    res.json({ 
+      success: true, 
+      message: "Archivo STL actualizado", 
+      product: updated 
+    });
+  } catch (err) {
+    console.error("❌ Error en updateProductSTL:", err);
+    res.status(500).json({ error: "Error al actualizar STL: " + err.message });
+  }
+};
+
+// ✅ Subida de archivo STL (a bucket "models")
 export const uploadSTLFile = async (req, res) => {
   console.log("📤 [BACK] uploadSTLFile ejecutado");
   console.log("📦 [BACK] req.file:", req.file ? "Archivo recibido" : "NO HAY ARCHIVO");

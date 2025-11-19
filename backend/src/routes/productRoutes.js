@@ -6,10 +6,10 @@ import {
   updateProduct,
   deleteProduct,
   uploadSTLFile,
+  updateProductSTLFile, // ✅ NUEVA IMPORTACIÓN
   upload,
 } from "../controllers/productController.js";
 import authenticateToken, { authorize } from "../middleware/authenticateToken.js";
-// ✅ Importar como default y named export
 
 const router = express.Router();
 
@@ -19,11 +19,14 @@ router.get("/", getProducts);
 // 🧩 Rutas específicas ANTES de /:id
 router.post(
   "/upload-stl", 
-  authenticateToken,  // ✅ Ya no necesita ()
+  authenticateToken,
   authorize("admin"), 
   upload.single("stl"), 
   uploadSTLFile
 );
+
+// 🔧 NUEVA RUTA: Actualizar STL de producto existente
+router.put("/:id/stl-file", authenticateToken, authorize("admin"), updateProductSTLFile);
 
 // 🔒 Rutas con parámetros AL FINAL
 router.get("/:id", getProduct);
