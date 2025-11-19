@@ -9,7 +9,7 @@ import {
   Heading 
 } from '@chakra-ui/react';
 
-// Componente FALLBACK - Más simple y confiable
+// Componente SIMPLE que evita Three.js
 const STLViewer = ({ url }) => {
   const [loading, setLoading] = useState(false);
   const [fileInfo, setFileInfo] = useState(null);

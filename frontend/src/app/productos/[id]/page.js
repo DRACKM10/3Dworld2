@@ -15,7 +15,7 @@ import {
 import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
 import { useParams, useRouter } from "next/navigation";
 import { useCart } from "../../../context/CartContext";
-import STLViewer from "../../../components/STLViewer"; // ✅ Importar el componente EXTERNO
+import STLViewer from "../../../components/STLViewer";
 
 export default function ProductPage() {
   const { id } = useParams();
