@@ -123,19 +123,19 @@ export default function ConfirmacionPage() {
       display="flex"
       alignItems="center"
       justifyContent="center"
-      bg="black"
+      bg="white"
       px={4}
     >
       <Box
-        bg="#1e1e1e"
+        bg="whiteAlpha.100"
         p={10}
         rounded="2xl"
-        boxShadow="0 0 25px rgba(92, 33, 43, 0.5)"
+        border={"4px solid #5c212b"}
         maxW="600px"
         w="full"
       >
         <Heading
-          color="#ffffff"
+          color="#5c212b"
           mb={6}
           textAlign="center"
           fontSize="2xl"
@@ -144,7 +144,7 @@ export default function ConfirmacionPage() {
           ✅ Confirmación de Pago
         </Heading>
 
-        <VStack spacing={4} align="stretch" color="gray.200">
+        <VStack spacing={4} align="stretch" color="black">
           <Text>
             <strong>Nombre:</strong> {pagoData.nombre}
           </Text>
@@ -175,16 +175,16 @@ export default function ConfirmacionPage() {
             </>
           )}
 
-          <Divider borderColor="gray.600" />
+          <Divider borderColor="#5c212b" />
 
           <Box textAlign="center">
             <Text fontSize="lg" mb={2} color="#5c212b" fontWeight="bold">
               ¡Tu pago ha sido procesado exitosamente!
             </Text>
-            <Text color="gray.400">
+            <Text color="black">
               📧 Hemos enviado un correo con la confirmación de tu pedido.
             </Text>
-            <Text color="gray.500" fontSize="sm" mt={2}>
+            <Text color="black" fontSize="sm" mt={2}>
               Revisa tu bandeja de entrada y spam.
             </Text>
           </Box>
@@ -201,7 +201,7 @@ export default function ConfirmacionPage() {
             <Button
               variant="outline"
               borderColor="#5c212b"
-              color="white"
+              color="black"
               _hover={{ bg: "#5c212b", transform: "scale(1.05)" }}
               onClick={() => router.push("/perfil")}
             >

@@ -236,20 +236,19 @@ export default function PagoPage() {
       display="flex"
       alignItems="center"
       justifyContent="center"
-      bg="black"
+      bg="white"
       px={4}
       py={10}
     >
       <Box
-        bg="rgba(30, 30, 30, 1)"
+        border={"5px solid #5c212b"}
         p={10}
         rounded="2xl"
-        boxShadow="0 0 25px rgba(92, 33, 43, 0.8)"
         maxW="650px"
         w="full"
       >
         <Heading
-          color="#ffffffff"
+          color="#000000ff"
           mb={6}
           textAlign="center"
           fontSize="2xl"
@@ -260,7 +259,7 @@ export default function PagoPage() {
 
         {/* Resumen del carrito */}
         <Box
-          bg="rgba(92, 33, 43, 0.2)"
+          bg="#0000006b"
           p={4}
           borderRadius="md"
           mb={6}
@@ -271,14 +270,14 @@ export default function PagoPage() {
           </Heading>
           <List spacing={2}>
             {cartItems.map((item, index) => (
-              <ListItem key={index} color="gray.300" fontSize="sm">
+              <ListItem key={index} color="black" fontSize="sm">
                 <ListIcon as={CheckCircleIcon} color="#5c212b" />
                 {item.name} x {item.quantity || 1} - ${(parseFloat(item.price) * (item.quantity || 1)).toFixed(2)}
               </ListItem>
             ))}
           </List>
           <Divider my={3} borderColor="gray.600" />
-          <Text color="white" fontSize="lg" fontWeight="bold" textAlign="right">
+          <Text color="black" fontSize="lg" fontWeight="bold" textAlign="right">
             Total: ${totalCart.toFixed(2)}
           </Text>
         </Box>
@@ -287,24 +286,24 @@ export default function PagoPage() {
           <VStack spacing={4} align="stretch">
             {/* Nombre */}
             <FormControl isInvalid={!!errors.nombre} isRequired>
-              <FormLabel color="gray.300">Nombre completo</FormLabel>
+              <FormLabel color="black">Nombre completo</FormLabel>
               <Input
                 name="nombre"
                 value={formData.nombre}
                 onChange={handleChange}
                 placeholder="Juan Pérez"
                 bg="whiteAlpha.100"
-                color="gray.200"
+                color="black"
                 _placeholder={{ color: "gray.500" }}
                 borderColor={errors.nombre ? "red.500" : "#5c212b"}
-                _focus={{ borderColor: "#7a2d3b", boxShadow: "0 0 10px #5c212b" }}
+                _focus={{ borderColor: "#5c212b", boxShadow: "0 0 10px #5c212b" }}
               />
               <FormErrorMessage>{errors.nombre}</FormErrorMessage>
             </FormControl>
 
             {/* Email */}
             <FormControl isInvalid={!!errors.email} isRequired>
-              <FormLabel color="gray.300">Email</FormLabel>
+              <FormLabel color="black">Email</FormLabel>
               <Input
                 name="email"
                 type="email"
@@ -312,44 +311,44 @@ export default function PagoPage() {
                 onChange={handleChange}
                 placeholder="tu@email.com"
                 bg="whiteAlpha.100"
-                color="gray.200"
+                color="black"
                 _placeholder={{ color: "gray.500" }}
                 borderColor={errors.email ? "red.500" : "#5c212b"}
-                _focus={{ borderColor: "#7a2d3b", boxShadow: "0 0 10px #5c212b" }}
+                _focus={{ borderColor: "#5c212b", boxShadow: "0 0 10px #5c212b" }}
               />
               <FormErrorMessage>{errors.email}</FormErrorMessage>
             </FormControl>
 
             {/* Dirección */}
             <FormControl isInvalid={!!errors.direccion} isRequired>
-              <FormLabel color="gray.300">Dirección</FormLabel>
+              <FormLabel color="black">Dirección</FormLabel>
               <Input
                 name="direccion"
                 value={formData.direccion}
                 onChange={handleChange}
                 placeholder="Calle 123 #45-67, Bogotá"
                 bg="whiteAlpha.100"
-                color="gray.200"
+                color="black"
                 _placeholder={{ color: "gray.500" }}
                 borderColor={errors.direccion ? "red.500" : "#5c212b"}
-                _focus={{ borderColor: "#7a2d3b", boxShadow: "0 0 10px #5c212b" }}
+                _focus={{ borderColor: "#5c212b", boxShadow: "0 0 10px #5c212b" }}
               />
               <FormErrorMessage>{errors.direccion}</FormErrorMessage>
             </FormControl>
 
             {/* Teléfono */}
             <FormControl isInvalid={!!errors.telefono} isRequired>
-              <FormLabel color="gray.300">Teléfono</FormLabel>
+              <FormLabel color="black">Teléfono</FormLabel>
               <Input
                 name="telefono"
                 value={formData.telefono}
                 onChange={handleChange}
                 placeholder="3001234567"
                 bg="whiteAlpha.100"
-                color="gray.200"
+                color="black"
                 _placeholder={{ color: "gray.500" }}
                 borderColor={errors.telefono ? "red.500" : "#5c212b"}
-                _focus={{ borderColor: "#7a2d3b", boxShadow: "0 0 10px #5c212b" }}
+                _focus={{ borderColor: "#5c212b", boxShadow: "0 0 10px #5c212b" }}
               />
               <FormErrorMessage>{errors.telefono}</FormErrorMessage>
             </FormControl>
@@ -358,17 +357,17 @@ export default function PagoPage() {
 
             {/* Método de pago */}
             <FormControl isInvalid={!!errors.tipoPago} isRequired>
-              <FormLabel color="gray.300">Método de pago</FormLabel>
+              <FormLabel color="black">Método de pago</FormLabel>
               <Select
                 name="tipoPago"
                 value={formData.tipoPago}
                 onChange={handleChange}
                 placeholder="Selecciona un método de pago"
-                bg="#1e1e1e"
-                color="gray.200"
+                bg="#00000077"
+                color="black"
                 _placeholder={{ color: "gray.500" }}
                 borderColor={errors.tipoPago ? "red.500" : "#5c212b"}
-                _focus={{ borderColor: "#7a2d3b", boxShadow: "0 0 10px #5c212b" }}
+                _focus={{ borderColor: "#5c212b", boxShadow: "0 0 10px #5c212b" }}
               >
                 <option value="tarjeta">Tarjeta de crédito / débito</option>
                 <option value="transferencia">Transferencia bancaria</option>
@@ -381,17 +380,17 @@ export default function PagoPage() {
             {formData.tipoPago === "tarjeta" && (
               <>
                 <FormControl isInvalid={!!errors.tarjeta} isRequired>
-                  <FormLabel color="gray.300">Número de tarjeta</FormLabel>
+                  <FormLabel color="black">Número de tarjeta</FormLabel>
                   <Input
                     name="tarjeta"
                     value={formData.tarjeta}
                     onChange={handleChange}
                     placeholder="1234 5678 9012 3456"
                     bg="whiteAlpha.100"
-                    color="gray.200"
+                    color="black"
                     _placeholder={{ color: "gray.500" }}
                     borderColor={errors.tarjeta ? "red.500" : "#5c212b"}
-                    _focus={{ borderColor: "#7a2d3b", boxShadow: "0 0 10px #5c212b" }}
+                    _focus={{ borderColor: "#5c212b", boxShadow: "0 0 10px #5c212b" }}
                     maxLength={19}
                   />
                   <FormErrorMessage>{errors.tarjeta}</FormErrorMessage>
@@ -399,34 +398,34 @@ export default function PagoPage() {
 
                 <HStack>
                   <FormControl isInvalid={!!errors.expiracion} isRequired>
-                    <FormLabel color="gray.300">Expiración</FormLabel>
+                    <FormLabel color="black">Expiración</FormLabel>
                     <Input
                       name="expiracion"
                       value={formData.expiracion}
                       onChange={handleChange}
                       placeholder="MM/AA"
                       bg="whiteAlpha.100"
-                      color="gray.200"
+                      color="black"
                       _placeholder={{ color: "gray.500" }}
                       borderColor={errors.expiracion ? "red.500" : "#5c212b"}
-                      _focus={{ borderColor: "#7a2d3b", boxShadow: "0 0 10px #5c212b" }}
+                      _focus={{ borderColor: "#5c212b", boxShadow: "0 0 10px #5c212b" }}
                       maxLength={5}
                     />
                     <FormErrorMessage>{errors.expiracion}</FormErrorMessage>
                   </FormControl>
 
                   <FormControl isInvalid={!!errors.cvv} isRequired>
-                    <FormLabel color="gray.300">CVV</FormLabel>
+                    <FormLabel color="black">CVV</FormLabel>
                     <Input
                       name="cvv"
                       value={formData.cvv}
                       onChange={handleChange}
                       placeholder="123"
                       bg="whiteAlpha.100"
-                      color="gray.200"
+                      color="black"
                       _placeholder={{ color: "gray.500" }}
                       borderColor={errors.cvv ? "red.500" : "#5c212b"}
-                      _focus={{ borderColor: "#7a2d3b", boxShadow: "0 0 10px #5c212b" }}
+                      _focus={{ borderColor: "#5c212b", boxShadow: "0 0 10px #5c212b" }}
                       maxLength={4}
                       type="password"
                     />

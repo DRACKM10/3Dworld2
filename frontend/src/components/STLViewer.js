@@ -60,10 +60,10 @@ const STLViewer = ({ url }) => {
   return (
     <Box 
       height="400px" 
-      bg="gray.900"
+      bg="#000000"
       borderRadius="md"
-      border="1px solid"
-      borderColor="gray.700"
+      border="8px solid #5c212b"
+      borderColor="#000000"
       display="flex"
       alignItems="center"
       justifyContent="center"
@@ -81,13 +81,19 @@ const STLViewer = ({ url }) => {
           </VStack>
         )}
         
-        <Text color="gray.400" fontSize="sm" textAlign="center">
+        <Text color="white" fontSize="sm" textAlign="center">
           El modelo 3D está listo para descargar y visualizar en cualquier software 3D
         </Text>
         
         <VStack spacing={3} mt={4}>
           <Button 
-            colorScheme="purple" 
+            colorScheme="#5c212b"
+            bg="#5c212b" 
+            _hover={{ 
+                bg: "#5c212b", 
+                transform: "translateY(-2px)",
+                boxShadow: "lg"
+            }}
             onClick={() => window.open(url, '_blank')}
             leftIcon={<Text>📥</Text>}
           >

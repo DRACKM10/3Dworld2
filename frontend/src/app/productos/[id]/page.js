@@ -88,7 +88,7 @@ export default function ProductPage() {
     return (
       <Box p={4} textAlign="center" bg="black" minH="100vh" display="flex" alignItems="center" justifyContent="center">
         <VStack spacing={4}>
-          <Spinner size="xl" color="purple.500" />
+          <Spinner size="xl" color="#5c212b" />
           <Text color="white" fontSize="xl">Cargando producto...</Text>
         </VStack>
       </Box>
@@ -113,14 +113,14 @@ export default function ProductPage() {
   const stlUrl = getSTLUrl();
 
   return (
-    <Box p={4} maxW="1200px" mx="auto" mt={4} bg="blackAlpha.600" minH="100vh" borderRadius="lg">
+    <Box p={4} maxW="1200px" mx="auto" mt={4} border="8px solid #5c212b" minH="100vh" borderRadius="lg">
       <Flex direction={{ base: "column", md: "row" }} gap={8} mb={10}>
         <Box 
           flex={1} 
           height={{ base: "300px", md: "500px" }} 
           borderRadius="12px" 
           overflow="hidden" 
-          bg="blackAlpha.400"
+          bg="#f9f5f5"
           display="flex"
           alignItems="center"
           justifyContent="center"
@@ -145,32 +145,32 @@ export default function ProductPage() {
           )}
         </Box>
 
-        <Box flex={1} color="white" py={4}>
-          <Heading as="h1" size="xl" mb={3} color="whiteAlpha.900">
+        <Box flex={1} color="black" py={4}>
+          <Heading as="h1" size="xl" mb={3} color="black">
             {product.name}
           </Heading>
           
-          <Text fontSize="3xl" fontWeight="bold" color="#a3aaff" mb={4}>
+          <Text fontSize="3xl" fontWeight="bold" color="#7a2d3b" mb={4}>
             ${product.price}
           </Text>
           
-          <Text mb={6} color="gray.300" fontSize="lg" lineHeight="1.6">
+          <Text mb={6} color="gray.600" fontSize="lg" lineHeight="1.6">
             {product.description}
           </Text>
 
           <VStack spacing={3} align="start" mb={8}>
             {product.category && (
-              <Text color="gray.400">
+              <Text color="#000000">
                 <strong>Categoría:</strong> {product.category}
               </Text>
             )}
             {product.stock !== undefined && (
-              <Text color={product.stock > 0 ? "green.400" : "red.400"}>
+              <Text color={product.stock > 0 ? "green.500" : "red.400"}>
                 <strong>Stock:</strong> {product.stock > 0 ? `${product.stock} disponibles` : "Agotado"}
               </Text>
             )}
             {stlUrl && (
-              <Text color="purple.400">
+              <Text color="#5c212b">
                 <strong>✅ Modelo 3D disponible</strong>
               </Text>
             )}
@@ -179,9 +179,9 @@ export default function ProductPage() {
           <VStack spacing={4} align="stretch">
             <Button
               colorScheme="purple"
-              bg="#805AD5"
+              bg="#5c212b"
               _hover={{ 
-                bg: "#6B46C1", 
+                bg: "#5c212b", 
                 transform: "translateY(-2px)",
                 boxShadow: "lg"
               }}
@@ -197,7 +197,8 @@ export default function ProductPage() {
 
             {stlUrl && (
               <Button
-                colorScheme="blue"
+                colorScheme="white"
+                border="1px solid #5c212b"
                 variant="outline"
                 size="lg"
                 height="50px"
@@ -210,11 +211,12 @@ export default function ProductPage() {
 
             <Button
               variant="outline"
-              colorScheme="whiteAlpha"
+              colorScheme="white"
+              color="black"
               size="lg"
               height="50px"
               onClick={() => router.push("/productos")}
-              _hover={{ bg: "whiteAlpha.100" }}
+              _hover={{ bg: "blackAlpha.300" }}
             >
               ← Volver a productos
             </Button>
@@ -225,9 +227,9 @@ export default function ProductPage() {
       {stlUrl && (
         <Box 
           mt={6}
-          bg="blackAlpha.400" 
+          bg="#5c212b"
           borderRadius="12px"
-          border="1px solid"
+          border="5px solid #5c212b"
           borderColor="whiteAlpha.200"
         >
           <Collapse in={showSTLViewer} animateOpacity>
@@ -235,7 +237,7 @@ export default function ProductPage() {
               <Heading size="lg" mb={2} color="white" textAlign="center">
                 🎮 Vista 3D Interactiva
               </Heading>
-              <Text mb={6} color="gray.400" textAlign="center">
+              <Text mb={6} color="white" textAlign="center">
                 Explora el modelo en 3D desde todos los ángulos
               </Text>
               

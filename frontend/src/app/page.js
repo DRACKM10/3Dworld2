@@ -185,7 +185,7 @@ export default function HomePage() {
           >
             Bienvenido a 3Dworld
           </Heading>
-          <Text color="gray.400" fontSize="lg">
+          <Text color="black" fontSize="lg">
             {userRole === "admin"
               ? "🔧 Panel de administración de productos"
               : "Descubre nuestros increíbles productos de impresión 3D"}
@@ -210,20 +210,20 @@ export default function HomePage() {
         <Box mb={6}>
           <InputGroup>
             <InputLeftElement pointerEvents="none">
-              <SearchIcon color="gray.400" />
+              <SearchIcon color="#5c212b" />
             </InputLeftElement>
             <Input
               placeholder="Buscar productos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              bg="gray.900"
+              bg="#5c212b"
               color="white"
               border="2px solid #5c212b"
               _focus={{ 
-                borderColor: "#a3aaffff", 
+                borderColor: "black", 
                 boxShadow: "0 0 10px #5c212b" 
               }}
-              _placeholder={{ color: "gray.500" }}
+              _placeholder={{ color: "white" }}
               size="lg"
             />
           </InputGroup>
@@ -252,7 +252,7 @@ export default function HomePage() {
         </HStack>
 
         {/* Contador de productos */}
-        <Text color="gray.400" mb={4} textAlign="center">
+        <Text color="black" mb={4} textAlign="center">
           {filteredProducts.length} producto{filteredProducts.length !== 1 ? "s" : ""} encontrado{filteredProducts.length !== 1 ? "s" : ""}
         </Text>
 

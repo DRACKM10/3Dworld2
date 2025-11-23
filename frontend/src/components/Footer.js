@@ -22,7 +22,7 @@ import {
 export default function Footer() {
   return (
     <Box bg="#111111" color="white" py={10} px={8} mt={20}>
-      <Divider borderColor="gray.700" mb={8} />
+      <Divider borderColor="#5c212b" mb={8} />
 
       <Flex
         justify="space-between"
@@ -32,7 +32,7 @@ export default function Footer() {
       >
         <Flex direction="column" maxW="300px">
           <Text fontSize="2xl" fontWeight="bold">
-            MiSitio
+            3DWORLD
           </Text>
           <Text fontSize="sm" mt={2} color="gray.400">
             Plataforma creada para ofrecer contenido útil, herramientas y
@@ -149,10 +149,10 @@ export default function Footer() {
         </Flex>
       </Flex>
 
-      <Divider borderColor="gray.700" mt={10} mb={5} />
+      <Divider borderColor="#5c212b" mt={10} mb={5} />
 
       <Text fontSize="sm" textAlign="center" color="gray.500">
-        © {new Date().getFullYear()} MiSitio — Todos los derechos reservados.
+        © {new Date().getFullYear()} 3DWORLD — Todos los derechos reservados.
       </Text>
     </Box>
   );

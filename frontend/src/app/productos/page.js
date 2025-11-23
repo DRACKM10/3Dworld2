@@ -77,7 +77,7 @@ export default function ProductosAdmin() {
             <Heading color="white" mb={2}>
               🔧 Panel de Administración
             </Heading>
-            <Text color="gray.400">
+            <Text color="white">
               Gestiona todos los productos de la tienda
             </Text>
           </Box>

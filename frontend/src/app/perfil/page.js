@@ -256,7 +256,7 @@ export default function Perfil() {
         maxW="1200px" 
         mx="auto" 
         px={{ base: 4, md: 6 }}
-        border="1px solid #5c212b"
+        border="6px solid #5c212b"
         borderRadius="16px"
         bg="#1a1a1ade"
         overflow="hidden"

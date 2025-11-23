@@ -9,11 +9,11 @@ export default function CartPage() {
   const router = useRouter();
 
   return (
-    <Box p={4} maxW="1200px" mx="auto" color="white" minH="100vh">
+    <Box p={4} maxW="1200px" mx="auto" color="black" minH="100vh">
       <Heading
         mb={6}
         textAlign="center"
-        textShadow="0 0 10px #5c212b"
+        color="black"
       >
         🛒 Tu Carrito de Compras
       </Heading>

@@ -42,7 +42,7 @@ export default function ProtectedRoute({ children, requiredRole = null }) {
         justifyContent="center"
         bg="black"
       >
-        <Spinner size="xl" color="purple.500" />
+        <Spinner size="xl" color="#5c212b" />
         <Text color="white" ml={4}>Verificando permisos...</Text>
       </Box>
     );
