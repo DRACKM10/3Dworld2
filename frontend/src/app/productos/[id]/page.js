@@ -11,11 +11,15 @@ import {
   useToast,
   Spinner,
   Collapse,
+  Badge,
+  HStack,
+  Avatar
 } from "@chakra-ui/react";
 import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
 import { useParams, useRouter } from "next/navigation";
 import { useCart } from "../../../context/CartContext";
 import STLViewer from "../../../components/STLViewer";
+import CommentsSection from "../../../components/CommentsSection";
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -27,6 +31,21 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [showSTLViewer, setShowSTLViewer] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Obtener usuario actual del localStorage
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        setCurrentUser(user);
+        console.log("👤 Usuario actual:", user);
+      } catch (error) {
+        console.error("❌ Error parsing user data:", error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     async function fetchProduct() {
@@ -40,7 +59,11 @@ export default function ProductPage() {
         
         const data = await response.json();
         console.log("✅ Product data:", data);
-        console.log("📦 STL File:", data.stl_file);
+        console.log("👤 Creador del producto:", {
+          creator_name: data.creator_name,
+          created_by: data.created_by,
+          is_official: data.creator_name === '3Dworld'
+        });
         
         setProduct(data);
       } catch (error) {
@@ -84,6 +107,21 @@ export default function ProductPage() {
     return url;
   };
 
+  // Determinar información del creador
+  const getCreatorInfo = () => {
+    if (!product) return null;
+    
+    const isOfficial = product.creator_name === '3Dworld';
+    
+    return {
+      name: product.creator_name || "Usuario",
+      isOfficial: isOfficial,
+      badgeColor: isOfficial ? "blue" : "green",
+      icon: isOfficial ? "🏢" : "👤",
+      description: isOfficial ? "Producto oficial de 3Dworld" : `Creado por ${product.creator_name}`
+    };
+  };
+
   if (loading)
     return (
       <Box p={4} textAlign="center" bg="black" minH="100vh" display="flex" alignItems="center" justifyContent="center">
@@ -111,6 +149,7 @@ export default function ProductPage() {
     );
 
   const stlUrl = getSTLUrl();
+  const creatorInfo = getCreatorInfo();
 
   return (
     <Box p={4} maxW="1200px" mx="auto" mt={4} border="8px solid #5c212b" minH="100vh" borderRadius="lg">
@@ -150,6 +189,35 @@ export default function ProductPage() {
             {product.name}
           </Heading>
           
+          {/* Información del creador */}
+          {creatorInfo && (
+            <Box 
+              mb={4} 
+              p={3} 
+              bg={creatorInfo.isOfficial ? 'blue.50' : 'green.50'}
+              borderRadius="md"
+              borderLeft="4px solid"
+              borderLeftColor={creatorInfo.isOfficial ? 'blue.400' : 'green.400'}
+            >
+              <HStack spacing={3}>
+                <Avatar 
+                  size="sm" 
+                  name={creatorInfo.name}
+                  bg={creatorInfo.isOfficial ? 'blue.500' : 'green.500'}
+                  color="white"
+                />
+                <VStack align="start" spacing={0}>
+                  <Text fontSize="sm" fontWeight="bold" color="gray.800">
+                    {creatorInfo.icon} {creatorInfo.description}
+                  </Text>
+                  <Text fontSize="xs" color="gray.600">
+                    Publicado el {new Date(product.created_at).toLocaleDateString()}
+                  </Text>
+                </VStack>
+              </HStack>
+            </Box>
+          )}
+          
           <Text fontSize="3xl" fontWeight="bold" color="#7a2d3b" mb={4}>
             ${product.price}
           </Text>
@@ -174,6 +242,18 @@ export default function ProductPage() {
                 <strong>✅ Modelo 3D disponible</strong>
               </Text>
             )}
+            
+            {/* Badge de tipo de producto */}
+            <Badge 
+              colorScheme={creatorInfo?.isOfficial ? "blue" : "green"} 
+              variant="subtle"
+              fontSize="sm"
+              px={2}
+              py={1}
+              borderRadius="full"
+            >
+              {creatorInfo?.isOfficial ? "🏢 Producto Oficial" : "👤 Creador Independiente"}
+            </Badge>
           </VStack>
 
           <VStack spacing={4} align="stretch">
@@ -240,10 +320,10 @@ export default function ProductPage() {
               <Text mb={6} color="white" textAlign="center">
                 Explora el modelo en 3D desde todos los ángulos
               </Text>
-              
+               
               {/* ✅ Esto usa el componente EXTERNO STLViewer */}
               <STLViewer url={stlUrl} />
-              
+               
               <Text mt={4} color="gray.500" textAlign="center" fontSize="sm">
                 💡 Usa el mouse para rotar • Rueda para zoom
               </Text>
@@ -251,6 +331,14 @@ export default function ProductPage() {
           </Collapse>
         </Box>
       )}
+
+      {/* Mostrar sección de comentarios */}
+      <Box mt={6}>
+        <CommentsSection 
+          productId={id} 
+          currentUser={currentUser} 
+        />
+      </Box>
     </Box>
   );
 }

@@ -1,4 +1,73 @@
+// models/productModel.js
 import { supabase } from "../config/supabase.js";
+
+/**
+ * Crear nuevo producto
+ */
+export const createProduct = async (productData) => {
+  const { 
+    name, 
+    description, 
+    price, 
+    image, 
+    category, 
+    stock, 
+    stlFile,
+    createdBy,      // ✅ NUEVO
+    creatorName     // ✅ NUEVO
+  } = productData;
+
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .insert([
+        {
+          name,
+          description,
+          price,
+          image,
+          category: category || "General",
+          stock: stock || 0,
+          stl_file: stlFile || null,
+          created_by: createdBy || null,      // ✅ NUEVO
+          creator_name: creatorName || null,  // ✅ NUEVO
+          is_active: true,
+          created_at: new Date().toISOString()
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    console.log('✅ Producto creado en Supabase:', data.id);
+    return data;
+  } catch (error) {
+    console.error('❌ Error en createProduct:', error);
+    throw new Error(`Error al crear producto: ${error.message}`);
+  }
+};
+
+/**
+ * ✅ Obtener productos de un usuario específico
+ */
+export const getProductsByUser = async (userId) => {
+  try {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('created_by', userId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return data || [];
+  } catch (error) {
+    console.error('❌ Error en getProductsByUser:', error);
+    throw new Error(`Error al obtener productos del usuario: ${error.message}`);
+  }
+};
 
 /**
  * Obtener todos los productos activos
@@ -47,40 +116,6 @@ export const getProductById = async (id) => {
 };
 
 /**
- * Crear nuevo producto
- */
-export const createProduct = async (product) => {
-  const { name, description, price, image, category, stock, stlFile } = product;
-
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .insert([
-        {
-          name,
-          description,
-          price,
-          image,
-          category,
-          stock: stock || 0,
-          stl_file: stlFile || null, // ✅ NUEVO CAMPO
-          is_active: true
-        }
-      ])
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    console.log('✅ Producto creado en Supabase:', data.id);
-    return data;
-  } catch (error) {
-    console.error('❌ Error en createProduct:', error);
-    throw new Error(`Error al crear producto: ${error.message}`);
-  }
-};
-
-/**
  * Actualizar producto por ID
  */
 export const updateProductById = async (id, product) => {
@@ -96,7 +131,7 @@ export const updateProductById = async (id, product) => {
         image,
         category,
         stock,
-        stl_file: stlFile || null, // ✅ NUEVO CAMPO
+        stl_file: stlFile || null,
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
@@ -144,7 +179,7 @@ export const deleteProductById = async (id) => {
 };
 
 /**
- * ✅ NUEVA FUNCIÓN: Actualizar solo el STL de un producto
+ * ✅ Actualizar solo el STL de un producto
  */
 export const updateProductSTL = async (id, stlFileUrl) => {
   try {

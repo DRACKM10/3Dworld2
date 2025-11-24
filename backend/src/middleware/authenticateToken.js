@@ -1,6 +1,6 @@
+// middleware/authenticateToken.js
 import jwt from "jsonwebtoken";
 
-// ✅ Exportar directamente el middleware (sin función wrapper)
 const authenticateToken = (req, res, next) => {
   if (!process.env.JWT_SECRET) {
     console.error("❌ JWT_SECRET no definido en .env");
@@ -20,8 +20,24 @@ const authenticateToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("✅ [AUTH] Token válido. Usuario:", decoded.email, "| Rol:", decoded.role);
-    req.user = decoded;
+    
+    console.log("✅ [AUTH] Token válido. Usuario:", {
+      id: decoded.id,
+      email: decoded.email,
+      name: decoded.name,
+      username: decoded.username,
+      role: decoded.role
+    });
+
+    // Asegurar que req.user tenga toda la información necesaria
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      name: decoded.name || decoded.username || 'Usuario',
+      username: decoded.username,
+      role: decoded.role || 'client'
+    };
+
     next();
   } catch (err) {
     console.error("❌ [AUTH] Error al verificar token:", err.message);
@@ -36,7 +52,7 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
-// ✅ Middleware de autorización por roles
+// Middleware de autorización por roles
 export const authorize = (...allowedRoles) => {
   return (req, res, next) => {
     const userRole = req.user?.role || 'client';

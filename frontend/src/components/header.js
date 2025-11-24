@@ -27,37 +27,85 @@ import RegisterModal from "./RegisterModal";
 export default function Header() {
   const [isLoginOpen, setLoginOpen] = useState(false);
   const [isRegisterOpen, setRegisterOpen] = useState(false);
-  const [usuario, setUsuario] = useState(null);
-  const [userData, setUserData] = useState(null);
+  const [user, setUser] = useState(null); // Cambiado de usuario/userData a user
   const toast = useToast();
 
   useEffect(() => {
     const loadCurrentUser = () => {
       try {
+        console.log('🔍 Header - Buscando usuario en localStorage...');
+        
+        // PRIMERO: Usar el nuevo sistema (user)
+        const userData = localStorage.getItem("user");
+        const token = localStorage.getItem("token");
+        
+        if (userData && token) {
+          const parsedUser = JSON.parse(userData);
+          console.log('✅ Header - Usuario cargado del nuevo sistema:', parsedUser);
+          setUser(parsedUser);
+          return;
+        }
+
+        // SEGUNDO: Intentar cargar desde el sistema antiguo (para compatibilidad)
         const userKey = localStorage.getItem("currentUser");
         if (userKey) {
           const storedUserData = localStorage.getItem(userKey);
           if (storedUserData) {
-            const user = JSON.parse(storedUserData);
-            setUsuario(user.name);
-            setUserData(user);
+            const oldUser = JSON.parse(storedUserData);
+            console.log('🔄 Header - Usuario cargado del sistema antiguo:', oldUser);
+            
+            // Migrar a nuevo sistema
+            const newUser = {
+              id: oldUser.id || 'temp-id',
+              name: oldUser.name,
+              username: oldUser.username || oldUser.name,
+              email: oldUser.email || '',
+              profilePic: oldUser.profilePic || '',
+              role: oldUser.role || 'client'
+            };
+            
+            localStorage.setItem("user", JSON.stringify(newUser));
+            setUser(newUser);
             return;
           }
         }
 
+        // TERCERO: Intentar cargar solo el nombre
         const storedUserName = localStorage.getItem("usuario");
         if (storedUserName) {
-          setUsuario(storedUserName);
+          console.log('📝 Header - Solo nombre disponible:', storedUserName);
+          const basicUser = {
+            id: 'temp-id',
+            name: storedUserName,
+            username: storedUserName,
+            email: '',
+            profilePic: '',
+            role: 'client'
+          };
+          setUser(basicUser);
+        } else {
+          console.log('❌ Header - No hay usuario en sesión');
+          setUser(null);
         }
       } catch (error) {
-        console.error("Error loading user:", error);
+        console.error("❌ Header - Error loading user:", error);
+        setUser(null);
       }
     };
 
+    // Cargar inicialmente
     loadCurrentUser();
-    const handleStorageChange = () => loadCurrentUser();
+
+    // Escuchar cambios en el localStorage
+    const handleStorageChange = () => {
+      console.log("🔄 Header - Storage change detected");
+      loadCurrentUser();
+    };
+
     window.addEventListener("storage", handleStorageChange);
-    const interval = setInterval(loadCurrentUser, 1000);
+    
+    // Verificar cada 500ms para cambios más rápidos
+    const interval = setInterval(loadCurrentUser, 500);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
@@ -66,15 +114,22 @@ export default function Header() {
   }, []);
 
   const handleLogout = () => {
+    console.log('🚪 Header - Cerrando sesión...');
+    
+    // Limpiar ambos sistemas (nuevo y antiguo)
     localStorage.removeItem("currentUser");
     localStorage.removeItem("usuario");
     localStorage.removeItem("token");
+    localStorage.removeItem("user"); // ← NUEVO SISTEMA
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userRole");
+    
+    // Limpiar datos antiguos
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith("user_")) localStorage.removeItem(key);
     });
 
-    setUsuario(null);
-    setUserData(null);
+    setUser(null);
 
     toast({
       title: "Sesión cerrada",
@@ -90,15 +145,27 @@ export default function Header() {
   };
 
   const getAvatarSrc = () => {
-    if (userData?.profilePic && userData.profilePic.trim() !== "") {
-      return userData.profilePic;
+    if (!user) return "";
+    
+    // PRIMERO: Usar la foto de perfil del nuevo sistema si existe
+    if (user.profilePic && user.profilePic.trim() !== "" && user.profilePic !== "/default-avatar.png") {
+      console.log("📸 Header - Usando foto de perfil:", user.profilePic);
+      return user.profilePic;
     }
-    if (usuario) {
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(
-        usuario
-      )}&background=7D00FF&color=fff`;
+    
+    // SEGUNDO: Usar avatar generado por nombre
+    if (user.name) {
+      const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=7D00FF&color=fff`;
+      console.log("🎨 Header - Usando avatar generado:", avatarUrl);
+      return avatarUrl;
     }
+    
     return "";
+  };
+
+  const getDisplayName = () => {
+    if (!user) return "";
+    return user.name || user.username || "Usuario";
   };
 
   // ✅ Funciones para cambiar entre modales
@@ -147,11 +214,11 @@ export default function Header() {
         <Flex gap={4} flexWrap="wrap" align="center">
           <CartIndicator />
 
-          {usuario ? (
+          {user ? (
             <Popover placement="bottom-end">
               <PopoverTrigger>
                 <Avatar
-                  name={usuario}
+                  name={getDisplayName()}
                   src={getAvatarSrc()}
                   size="sm"
                   cursor="pointer"
@@ -176,17 +243,17 @@ export default function Header() {
                   <Avatar
                     size="lg"
                     src={getAvatarSrc()}
-                    name={usuario}
+                    name={getDisplayName()}
                     mb={2}
                     border={`2px solid ${colors.primary.main}`}
                     mx="auto"
                   />
                   <Text fontWeight="bold" fontSize="sm" mb={1}>
-                    {usuario}
+                    {getDisplayName()}
                   </Text>
-                  {userData?.email && (
+                  {user.email && (
                     <Text fontSize="xs" color={colors.text.muted} mb={2}>
-                      {userData.email}
+                      {user.email}
                     </Text>
                   )}
 

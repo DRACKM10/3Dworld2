@@ -5,7 +5,8 @@ import {
   createProduct,
   updateProductById,
   deleteProductById,
-  updateProductSTL // ✅ NUEVA IMPORTACIÓN
+  updateProductSTL,
+  getProductsByUser
 } from "../models/productModel.js";
 import { supabase, BUCKET_NAME } from "../config/supabase.js";
 import multer from "multer";
@@ -56,6 +57,19 @@ export const addProduct = async (req, res) => {
   try {
     const { name, description, price, category, stock, stlFile } = req.body;
 
+    // ✅ Obtener información del usuario autenticado
+    const userId = req.user?.id;
+    const userEmail = req.user?.email;
+    const userRole = req.user?.role;
+    const userName = req.user?.name;
+
+    console.log("👤 Usuario creador:", { 
+      userId, 
+      userName, 
+      userEmail, 
+      userRole 
+    });
+
     if (!name || !price)
       return res.status(400).json({ error: "Nombre y precio son requeridos" });
 
@@ -74,6 +88,17 @@ export const addProduct = async (req, res) => {
     const { data: publicUrlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(fileName);
     const imageUrl = publicUrlData.publicUrl;
 
+    // ✅ DETERMINAR EL NOMBRE DEL CREADOR SEGÚN EL ROL
+    let creatorDisplayName;
+    
+    if (userRole === 'admin') {
+      creatorDisplayName = "3Dworld";
+      console.log("🏢 Producto creado por administrador - Mostrar como: 3Dworld");
+    } else {
+      creatorDisplayName = userName || userEmail || "Usuario";
+      console.log("👤 Producto creado por usuario - Mostrar como:", creatorDisplayName);
+    }
+
     const productData = {
       name: name.trim(),
       description: description || "",
@@ -81,11 +106,19 @@ export const addProduct = async (req, res) => {
       image: imageUrl,
       category: category || "General",
       stock: stock ? parseInt(stock) : 0,
-      stlFile: stlFile || null, // ✅ Nuevo campo
+      stlFile: stlFile || null,
+      createdBy: userId,
+      creatorName: creatorDisplayName,
     };
 
     const newProduct = await createProduct(productData);
-    res.status(201).json({ success: true, message: "Producto creado", product: newProduct });
+    
+    res.status(201).json({ 
+      success: true, 
+      message: "Producto creado", 
+      product: newProduct 
+    });
+    
   } catch (err) {
     console.error("❌ Error en addProduct:", err);
     res.status(500).json({ error: "Error al crear producto: " + err.message });
@@ -120,7 +153,7 @@ export const updateProduct = async (req, res) => {
       image: imageUrl,
       category: category || "General",
       stock: stock ? parseInt(stock) : 0,
-      stlFile: stlFile || null, // ✅ Nuevo campo
+      stlFile: stlFile || null,
     };
 
     const updated = await updateProductById(id, productData);
@@ -133,7 +166,7 @@ export const updateProduct = async (req, res) => {
   }
 };
 
-// ✅ Eliminar producto
+// ✅ Eliminar producto (CON SOFT DELETE O CASCADE)
 export const deleteProduct = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -142,20 +175,57 @@ export const deleteProduct = async (req, res) => {
     const product = await getProductById(id);
     if (!product) return res.status(404).json({ error: "Producto no encontrado" });
 
+    // Eliminar imagen del storage si existe
     if (product.image) {
       const fileName = product.image.split("/").pop();
       await supabase.storage.from(BUCKET_NAME).remove([fileName]);
     }
 
+    // Eliminar STL del storage si existe
+    if (product.stl_file) {
+      const stlFileName = product.stl_file.split("/").pop();
+      await supabase.storage.from("stl-files").remove([stlFileName]);
+    }
+
     await deleteProductById(id);
-    res.json({ success: true, message: "Producto eliminado" });
+    
+    res.json({ 
+      success: true, 
+      message: "Producto eliminado correctamente" 
+    });
+    
   } catch (err) {
     console.error("❌ Error en deleteProduct:", err);
+    
+    // Manejar error de constraint de foreign key
+    if (err.message.includes('foreign key constraint')) {
+      return res.status(409).json({ 
+        error: "No se puede eliminar el producto porque tiene órdenes asociadas. Use eliminación suave (soft delete)." 
+      });
+    }
+    
     res.status(500).json({ error: "Error al eliminar producto: " + err.message });
   }
 };
 
-// ✅ NUEVA FUNCIÓN: Actualizar STL de producto existente
+// ✅ Obtener productos del usuario actual
+export const getMyProducts = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ error: "Usuario no autenticado" });
+    }
+
+    const products = await getProductsByUser(userId);
+    res.json(products);
+  } catch (err) {
+    console.error("❌ Error en getMyProducts:", err);
+    res.status(500).json({ error: "Error al obtener productos del usuario" });
+  }
+};
+
+// ✅ Actualizar STL de producto existente
 export const updateProductSTLFile = async (req, res) => {
   console.log("📤 Actualizando STL del producto...");
   try {
@@ -182,7 +252,7 @@ export const updateProductSTLFile = async (req, res) => {
   }
 };
 
-// ✅ Subida de archivo STL (a bucket "models")
+// ✅ Subida de archivo STL (a bucket "stl-files")
 export const uploadSTLFile = async (req, res) => {
   console.log("📤 [BACK] uploadSTLFile ejecutado");
   console.log("📦 [BACK] req.file:", req.file ? "Archivo recibido" : "NO HAY ARCHIVO");
@@ -245,5 +315,35 @@ export const uploadSTLFile = async (req, res) => {
   } catch (err) {
     console.error("💀 [BACK] Error en uploadSTLFile:", err);
     res.status(500).json({ error: "Error al subir modelo 3D: " + err.message });
+  }
+};
+
+// ✅ Restaurar producto (soft delete)
+export const restoreProduct = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: "ID inválido" });
+
+    const { data, error } = await supabase
+      .from('products')
+      .update({ 
+        is_active: true,
+        deleted_at: null
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: "Producto no encontrado" });
+
+    res.json({ 
+      success: true, 
+      message: "Producto restaurado", 
+      product: data 
+    });
+  } catch (err) {
+    console.error("❌ Error en restoreProduct:", err);
+    res.status(500).json({ error: "Error al restaurar producto: " + err.message });
   }
 };

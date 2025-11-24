@@ -17,8 +17,24 @@ import {
   Box,
   Image,
   Text,
+  Select,
+  Alert,
+  AlertIcon,
 } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
+
+// ✅ Categorías predefinidas para clientes
+const CLIENT_CATEGORIES = [
+  "Figuras y Estatuas",
+  "Juguetes",
+  "Decoración",
+  "Útiles y Herramientas",
+  "Accesorios",
+  "Prototipos",
+  "Arte",
+  "Joyería",
+  "Otro"
+];
 
 export default function ProductFormModal({ isOpen, onClose, onAddProduct, editProduct }) {
   const [formData, setFormData] = useState({
@@ -31,12 +47,19 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
   const [image, setImage] = useState(null);
   const [previewImage, setPreviewImage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
   const [uploadedSTL, setUploadedSTL] = useState(null);
   const [uploadingSTL, setUploadingSTL] = useState(false);
+  const [userRole, setUserRole] = useState(null);
 
   const toast = useToast();
 
+  // ✅ Detectar rol del usuario
+  useEffect(() => {
+    const role = localStorage.getItem("userRole");
+    setUserRole(role);
+  }, []);
+
+  // Cargar datos si es edición
   useEffect(() => {
     if (editProduct) {
       setFormData({
@@ -47,11 +70,12 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
         stock: editProduct.stock || "",
       });
       setPreviewImage(editProduct.image || "");
-
-      if (editProduct.stlFile) {
+      
+      if (editProduct.stlFile || editProduct.stl_file) {
+        const stlUrl = editProduct.stlFile || editProduct.stl_file;
         setUploadedSTL({
-          name: editProduct.stlFile.split("/").pop(),
-          url: editProduct.stlFile,
+          name: stlUrl.split("/").pop(),
+          url: stlUrl,
           size: "N/A",
           type: "STL"
         });
@@ -65,38 +89,39 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
   }, [editProduct, isOpen]);
 
   const handleInputChange = (e) => {
-    setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast({
-        title: "Error",
-        description: "Solo imágenes",
-        status: "error",
-      });
-      return;
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        toast({
+          title: "Error",
+          description: "Solo se permiten archivos de imagen",
+          status: "error",
+          duration: 3000,
+        });
+        return;
+      }
+      setImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => setPreviewImage(e.target.result);
+      reader.readAsDataURL(file);
     }
-
-    setImage(file);
-    const reader = new FileReader();
-    reader.onload = (ev) => setPreviewImage(ev.target.result);
-    reader.readAsDataURL(file);
   };
 
   const handleSTLUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const ext = file.name.split(".").pop().toLowerCase();
+    const ext = file.name.split('.').pop().toLowerCase();
     if (!["stl", "obj", "gcode"].includes(ext)) {
       toast({
-        title: "Error",
-        description: "Solo STL / OBJ / GCODE",
+        title: "❌ Error",
+        description: "Solo se permiten archivos STL, OBJ o GCODE",
         status: "error",
+        duration: 3000,
       });
       e.target.value = "";
       return;
@@ -104,9 +129,10 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
 
     if (file.size > 20 * 1024 * 1024) {
       toast({
-        title: "Error",
-        description: "Máximo 20MB",
+        title: "❌ Error",
+        description: "El archivo no debe superar 20MB",
         status: "error",
+        duration: 3000,
       });
       e.target.value = "";
       return;
@@ -115,34 +141,42 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
     setUploadingSTL(true);
 
     try {
-      const fd = new FormData();
-      fd.append("stl", file);
-      fd.append("productId", editProduct?.id || "temp");
+      const formData = new FormData();
+      formData.append("stl", file);
+      formData.append("productId", editProduct?.id || "temp");
 
       const token = localStorage.getItem("token");
+      const url = "http://localhost:8000/api/products/upload-stl";
 
-      const response = await fetch("http://localhost:8000/api/products/upload-stl", {
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           Authorization: token ? `Bearer ${token}` : undefined,
         },
-        body: fd,
+        body: formData,
       });
 
-      if (!response.ok) throw new Error(await response.text());
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText}`);
+      }
 
       const data = await response.json();
       setUploadedSTL(data.file);
 
       toast({
-        title: "Archivo subido",
+        title: "✅ Archivo subido",
+        description: file.name,
         status: "success",
+        duration: 2000,
       });
     } catch (error) {
+      console.error("💀 Error:", error);
       toast({
-        title: "Error al subir",
+        title: "❌ Error al subir archivo",
         description: error.message,
         status: "error",
+        duration: 4000,
       });
       e.target.value = "";
     } finally {
@@ -155,16 +189,31 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
 
     if (!formData.name || !formData.price) {
       toast({
-        title: "Campos requeridos",
+        title: "❌ Error",
+        description: "Nombre y precio son requeridos",
         status: "error",
+        duration: 3000,
       });
       return;
     }
 
     if (!editProduct && !image) {
       toast({
-        title: "La imagen es requerida",
+        title: "❌ Error",
+        description: "La imagen es requerida para productos nuevos",
         status: "error",
+        duration: 3000,
+      });
+      return;
+    }
+
+    // ✅ Validar categoría para clientes
+    if (userRole === "client" && !formData.category) {
+      toast({
+        title: "❌ Error",
+        description: "Por favor selecciona una categoría",
+        status: "error",
+        duration: 3000,
       });
       return;
     }
@@ -172,24 +221,28 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
     setIsLoading(true);
 
     try {
-      const fd = new FormData();
-      fd.append("name", formData.name);
-      fd.append("description", formData.description);
-      fd.append("price", formData.price);
-      fd.append("category", formData.category);
-      fd.append("stock", formData.stock);
+      const submitData = new FormData();
+      submitData.append("name", formData.name);
+      submitData.append("description", formData.description);
+      submitData.append("price", formData.price);
+      submitData.append("category", formData.category);
+      submitData.append("stock", formData.stock || "0");
 
-      if (image) fd.append("image", image);
-      else if (editProduct) fd.append("currentImage", editProduct.image);
+      if (image) {
+        submitData.append("image", image);
+      } else if (editProduct) {
+        submitData.append("currentImage", editProduct.image);
+      }
 
-      if (uploadedSTL) fd.append("stlFile", uploadedSTL.url);
+      if (uploadedSTL) {
+        submitData.append("stlFile", uploadedSTL.url);
+      }
 
       const url = editProduct
         ? `http://localhost:8000/api/products/${editProduct.id}`
         : "http://localhost:8000/api/products";
-
+      
       const method = editProduct ? "PUT" : "POST";
-
       const token = localStorage.getItem("token");
 
       const response = await fetch(url, {
@@ -197,19 +250,30 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
         headers: {
           Authorization: token ? `Bearer ${token}` : undefined,
         },
-        body: fd,
+        body: submitData,
       });
 
-      const raw = await response.text();
-      const result = JSON.parse(raw);
+      const resultText = await response.text();
+      let result;
+      try {
+        result = JSON.parse(resultText);
+      } catch {
+        throw new Error("El servidor no devolvió JSON válido");
+      }
 
-      if (!response.ok) throw new Error(result.error);
+      if (!response.ok) {
+        throw new Error(result.error || `Error ${response.status}`);
+      }
 
       onAddProduct(result.product);
-
+      
       toast({
-        title: editProduct ? "Producto actualizado" : "Producto creado",
+        title: editProduct ? "✅ Producto actualizado" : "✅ Producto creado",
+        description: userRole === "client" 
+          ? "Tu producto se publicó correctamente" 
+          : "Operación exitosa",
         status: "success",
+        duration: 2000,
       });
 
       setFormData({ name: "", description: "", price: "", category: "", stock: "" });
@@ -218,10 +282,12 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
       setUploadedSTL(null);
       onClose();
     } catch (error) {
+      console.error("💀 Error en submit:", error);
       toast({
-        title: "Error",
+        title: "❌ Error",
         description: error.message,
         status: "error",
+        duration: 4000,
       });
     } finally {
       setIsLoading(false);
@@ -231,57 +297,161 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <ModalOverlay />
-      <ModalContent bg="gray.900" color="white">
-        <ModalHeader>{editProduct ? "Editar" : "Agregar"} Producto</ModalHeader>
+      <ModalContent bg="white" color="black">
+        <ModalHeader color="#5c212b">
+          {editProduct ? "Editar" : userRole === "client" ? "Publicar" : "Agregar"} Producto
+        </ModalHeader>
         <ModalCloseButton />
         <form onSubmit={handleSubmit}>
           <ModalBody>
             <VStack spacing={4}>
+              {/* ✅ Alerta informativa para clientes */}
+              {userRole === "client" && !editProduct && (
+                <Alert status="info" borderRadius="md">
+                  <AlertIcon />
+                  <Text fontSize="sm">
+                    Estás publicando un producto. Otros usuarios podrán verlo en la tienda.
+                  </Text>
+                </Alert>
+              )}
+
               <FormControl isRequired>
-                <FormLabel>Nombre</FormLabel>
-                <Input name="name" value={formData.name} onChange={handleInputChange} bg="blackAlpha.400" />
+                <FormLabel>Nombre del producto</FormLabel>
+                <Input
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  bg="white"
+                  border="2px solid #5c212b"
+                  _focus={{ borderColor: "#a3aaffff" }}
+                />
               </FormControl>
 
               <FormControl>
                 <FormLabel>Descripción</FormLabel>
-                <Textarea name="description" value={formData.description} onChange={handleInputChange} bg="blackAlpha.400" />
+                <Textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  bg="white"
+                  border="2px solid #5c212b"
+                  _focus={{ borderColor: "#a3aaffff" }}
+                  placeholder="Describe tu producto..."
+                />
               </FormControl>
 
               <FormControl isRequired>
-                <FormLabel>Precio</FormLabel>
-                <Input type="number" name="price" value={formData.price} onChange={handleInputChange} bg="blackAlpha.400" />
+                <FormLabel>Precio (USD)</FormLabel>
+                <Input
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  bg="white"
+                  border="2px solid #5c212b"
+                  _focus={{ borderColor: "#a3aaffff" }}
+                />
               </FormControl>
 
-              <FormControl>
+              {/* ✅ Categoría: Select para clientes, Input para admin */}
+              <FormControl isRequired={userRole === "client"}>
                 <FormLabel>Categoría</FormLabel>
-                <Input name="category" value={formData.category} onChange={handleInputChange} bg="blackAlpha.400" />
+                {userRole === "client" ? (
+                  <Select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    bg="white"
+                    border="2px solid #5c212b"
+                    _focus={{ borderColor: "#a3aaffff" }}
+                    placeholder="Selecciona una categoría"
+                  >
+                    {CLIENT_CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </Select>
+                ) : (
+                  <Input
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    bg="white"
+                    border="2px solid #5c212b"
+                    _focus={{ borderColor: "#a3aaffff" }}
+                    placeholder="Ej: Electrónica, Decoración..."
+                  />
+                )}
               </FormControl>
 
               <FormControl>
-                <FormLabel>Stock</FormLabel>
-                <Input type="number" name="stock" value={formData.stock} onChange={handleInputChange} bg="blackAlpha.400" />
+                <FormLabel>Stock disponible</FormLabel>
+                <Input
+                  name="stock"
+                  type="number"
+                  value={formData.stock}
+                  onChange={handleInputChange}
+                  bg="white"
+                  border="2px solid #5c212b"
+                  _focus={{ borderColor: "#a3aaffff" }}
+                />
               </FormControl>
 
               <FormControl isRequired={!editProduct}>
-                <FormLabel>Imagen</FormLabel>
-                <Input type="file" accept="image/*" onChange={handleImageChange} />
+                <FormLabel>
+                  Imagen {editProduct && "(dejar vacío para mantener actual)"}
+                </FormLabel>
+                <Input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageChange}
+                  border="2px solid #5c212b"
+                />
               </FormControl>
 
               {previewImage && (
                 <Box>
-                  <Image src={previewImage} maxH="200px" alt="Preview" />
+                  <Image src={previewImage} alt="Preview" maxH="200px" borderRadius="md" />
+                  <Text fontSize="sm" color="green.500" mt={2}>
+                    ✅ {image ? "Nueva imagen" : "Imagen actual"}
+                  </Text>
                 </Box>
               )}
 
+              {/* Archivo STL */}
               <FormControl>
-                <FormLabel>Archivo 3D (STL/OBJ/GCODE)</FormLabel>
-                <Input type="file" accept=".stl,.obj,.gcode" onChange={handleSTLUpload} disabled={uploadingSTL} />
+                <FormLabel>Archivo 3D (Opcional - STL/OBJ/GCODE)</FormLabel>
+                <Input
+                  type="file"
+                  accept=".stl,.obj,.gcode"
+                  onChange={handleSTLUpload}
+                  isDisabled={uploadingSTL}
+                  border="2px solid #5c212b"
+                />
+                {uploadingSTL && (
+                  <Text fontSize="sm" color="blue.500" mt={2}>
+                    ⏳ Subiendo archivo...
+                  </Text>
+                )}
               </FormControl>
 
               {uploadedSTL && (
-                <Box bg="gray.700" p={3} borderRadius="md" width="100%">
-                  <Text>Archivo cargado: {uploadedSTL.name}</Text>
-                  <Button colorScheme="red" size="xs" mt={2} onClick={() => setUploadedSTL(null)}>
+                <Box width="100%" p={3} bg="gray.50" borderRadius="md" border="2px solid #5c212b">
+                  <Text fontWeight="bold" color="green.500" mb={1}>
+                    ✅ Archivo 3D cargado:
+                  </Text>
+                  <Text fontSize="sm">📁 {uploadedSTL.name}</Text>
+                  <Text fontSize="xs" color="gray.600">
+                    {uploadedSTL.type} - {uploadedSTL.size} MB
+                  </Text>
+                  <Button
+                    size="xs"
+                    colorScheme="red"
+                    mt={2}
+                    onClick={() => setUploadedSTL(null)}
+                  >
                     Eliminar archivo
                   </Button>
                 </Box>
@@ -290,11 +460,23 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
           </ModalBody>
 
           <ModalFooter>
-            <Button mr={3} onClick={onClose} isDisabled={isLoading || uploadingSTL}>
+            <Button
+              variant="ghost"
+              mr={3}
+              onClick={onClose}
+              isDisabled={isLoading || uploadingSTL}
+            >
               Cancelar
             </Button>
-            <Button type="submit" colorScheme="red" isLoading={isLoading} isDisabled={uploadingSTL}>
-              {editProduct ? "Actualizar" : "Crear"}
+            <Button
+              bg="#5c212b"
+              color="white"
+              type="submit"
+              isLoading={isLoading}
+              isDisabled={uploadingSTL}
+              _hover={{ bg: "#7a2d3b" }}
+            >
+              {editProduct ? "Actualizar" : userRole === "client" ? "Publicar" : "Crear"}
             </Button>
           </ModalFooter>
         </form>
