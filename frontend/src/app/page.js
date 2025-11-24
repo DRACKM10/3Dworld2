@@ -21,7 +21,7 @@ import {
 import { SearchIcon, EditIcon, DeleteIcon } from "@chakra-ui/icons";
 import { useRouter } from "next/navigation";
 import { useCart } from "../context/CartContext";
-import ProductFormModal from "../components/ProductFormModal"; // ← Ajusta la ruta si está en otra carpeta
+import ProductFormModal from "../components/ProductFormModal";
 
 export default function HomePage() {
   const router = useRouter();
@@ -37,16 +37,38 @@ export default function HomePage() {
   const [userRole, setUserRole] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // === ESTADOS DEL MODAL ===
+  // Estados del modal
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editProduct, setEditProduct] = useState(null); // null = crear nuevo, objeto = editar
+  const [editProduct, setEditProduct] = useState(null);
 
-  // Detectar rol del usuario
+  // ✅ Detectar rol con listener de cambios
   useEffect(() => {
-    const role = localStorage.getItem("userRole");
-    const token = localStorage.getItem("token");
-    setUserRole(role);
-    setIsLoggedIn(!!token);
+    const checkAuth = () => {
+      const role = localStorage.getItem("userRole");
+      const token = localStorage.getItem("token");
+      
+      console.log("🔍 HomePage - Verificando autenticación:");
+      console.log("   Rol:", role || "ninguno");
+      console.log("   Token:", token ? "presente" : "ausente");
+      
+      setUserRole(role);
+      setIsLoggedIn(!!token);
+    };
+
+    checkAuth();
+
+    const handleStorageChange = () => {
+      console.log("🔄 HomePage detectó cambio en localStorage");
+      checkAuth();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("focus", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("focus", handleStorageChange);
+    };
   }, []);
 
   // Cargar productos
@@ -57,6 +79,8 @@ export default function HomePage() {
         if (!response.ok) throw new Error("Error al cargar productos");
         const data = await response.json();
 
+        console.log("📦 Productos cargados:", data.length);
+
         setProducts(data);
         setFilteredProducts(data);
 
@@ -66,6 +90,7 @@ export default function HomePage() {
         ];
         setCategories(uniqueCategories);
       } catch (err) {
+        console.error("❌ Error:", err);
         toast({
           title: "Error",
           description: "No se pudieron cargar los productos",
@@ -98,7 +123,7 @@ export default function HomePage() {
     setFilteredProducts(result);
   }, [selectedCategory, searchTerm, products]);
 
-  // === ABRIR MODAL PARA CREAR O EDITAR ===
+  // Modal
   const openCreateModal = () => {
     setEditProduct(null);
     setIsModalOpen(true);
@@ -114,27 +139,27 @@ export default function HomePage() {
     setEditProduct(null);
   };
 
-  // === CALLBACK CUANDO SE CREA/ACTUALIZA UN PRODUCTO ===
   const handleProductSaved = (newOrUpdatedProduct) => {
     if (editProduct) {
-      // Actualizar existente
       setProducts((prev) =>
         prev.map((p) => (p.id === newOrUpdatedProduct.id ? newOrUpdatedProduct : p))
       );
     } else {
-      // Agregar nuevo
       setProducts((prev) => [...prev, newOrUpdatedProduct]);
     }
     closeModal();
   };
 
-  // === ELIMINAR PRODUCTO ===
+  // Eliminar
   const handleDeleteProduct = async (id, e) => {
     e.stopPropagation();
+    
+    const token = localStorage.getItem("token");
+    console.log("🗑️ Intentando eliminar producto:", id);
+    
     if (!confirm("¿Estás seguro de eliminar este producto?")) return;
 
     try {
-      const token = localStorage.getItem("token");
       const response = await fetch(`http://localhost:8000/api/products/${id}`, {
         method: "DELETE",
         headers: {
@@ -142,30 +167,35 @@ export default function HomePage() {
         },
       });
 
-      if (!response.ok) throw new Error("Error al eliminar producto");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText}`);
+      }
 
       setProducts((prev) => prev.filter((p) => p.id !== id));
       setFilteredProducts((prev) => prev.filter((p) => p.id !== id));
 
       toast({
-        title: "Producto eliminado",
+        title: "✅ Producto eliminado",
         status: "success",
+        duration: 2000,
       });
     } catch (err) {
+      console.error("❌ Error:", err);
       toast({
-        title: "Error",
-        description: err.message || "No se pudo eliminar",
+        title: "❌ Error",
+        description: err.message,
         status: "error",
       });
     }
   };
 
-  // === AGREGAR AL CARRITO (CLIENTE) ===
+  // Agregar al carrito
   const handleAddToCart = (product, e) => {
     e.stopPropagation();
     addToCart(product);
     toast({
-      title: "Agregado al carrito",
+      title: "✅ Agregado al carrito",
       description: `${product.name} agregado exitosamente`,
       status: "success",
       duration: 2000,
@@ -174,10 +204,20 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <Box p={4} textAlign="center" minH="100vh" display="flex" alignItems="center" justifyContent="center">
+      <Box
+        p={4}
+        textAlign="center"
+        minH="100vh"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        bg="white"
+      >
         <VStack>
-          <Spinner size="xl" color="#5c212b" />
-          <Text color="white" mt={4}>Cargando productos...</Text>
+          <Spinner size="xl" color="#5c212b" thickness="4px" />
+          <Text color="black" mt={4} fontSize="lg">
+            Cargando productos...
+          </Text>
         </VStack>
       </Box>
     );
@@ -185,20 +225,25 @@ export default function HomePage() {
 
   return (
     <>
-      <Box minH="100vh" p={4} bg="#ffffff">
+      <Box minH="100vh" p={4} bg="white">
         <Box maxW="1400px" mx="auto">
           {/* Header */}
           <Box mb={8} textAlign="center">
-            <Heading color="white" size="2xl" mb={2} bg="#5c212b" bgClip="text">
+            <Heading 
+              color="#5c212b" 
+              size="2xl" 
+              mb={2}
+              textShadow="2px 2px 4px rgba(0,0,0,0.1)"
+            >
               Bienvenido a 3Dworld
             </Heading>
-            <Text color="black" fontSize="lg">
+            <Text color="black" fontSize="lg" fontWeight="500">
               {userRole === "admin"
-                ? "Panel de administración de productos"
+                ? "🔧 Panel de administración de productos"
                 : "Descubre nuestros increíbles productos de impresión 3D"}
             </Text>
 
-            {/* Botón superior solo para admin */}
+            {/* Botón admin */}
             {userRole === "admin" && (
               <Button
                 mt={4}
@@ -207,15 +252,16 @@ export default function HomePage() {
                 _hover={{ bg: "#7a2d3b", transform: "scale(1.05)" }}
                 onClick={openCreateModal}
                 size="lg"
+                boxShadow="0 4px 10px rgba(92, 33, 43, 0.3)"
               >
-                Agregar nuevo producto
+                ➕ Agregar nuevo producto
               </Button>
             )}
           </Box>
 
-          {/* Barra de búsqueda */}
+          {/* Búsqueda */}
           <Box mb={6}>
-            <InputGroup>
+            <InputGroup size="lg">
               <InputLeftElement pointerEvents="none">
                 <SearchIcon color="#5c212b" />
               </InputLeftElement>
@@ -223,43 +269,46 @@ export default function HomePage() {
                 placeholder="Buscar productos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                bg="#5c212b"
-                color="white"
+                bg="white"
+                color="black"
                 border="2px solid #5c212b"
-                _focus={{ borderColor: "black", boxShadow: "0 0 10px #5c212b" }}
-                _placeholder={{ color: "white" }}
-                size="lg"
+                _focus={{ 
+                  borderColor: "#a3aaffff", 
+                  boxShadow: "0 0 10px rgba(163, 170, 255, 0.5)" 
+                }}
+                _placeholder={{ color: "gray.500" }}
               />
             </InputGroup>
           </Box>
 
-          {/* Filtros de categoría */}
+          {/* Filtros */}
           <HStack spacing={2} mb={6} flexWrap="wrap" justify="center">
             {categories.map((category) => (
               <Button
                 key={category}
                 size="md"
-                bg={selectedCategory === category ? "#5c212b" : "gray.800"}
-                border="2px solid"
-                borderColor={selectedCategory === category ? "#a3aaffff" : "#5c212b"}
-                color="white"
+                bg={selectedCategory === category ? "#5c212b" : "white"}
+                border="2px solid #5c212b"
+                color={selectedCategory === category ? "white" : "#5c212b"}
                 _hover={{
-                  bg: "#7a2d3b",
+                  bg: selectedCategory === category ? "#7a2d3b" : "#5c212b",
+                  color: "white",
                   transform: "scale(1.05)",
-                  borderColor: "#a3aaffff",
                 }}
                 onClick={() => setSelectedCategory(category)}
+                transition="all 0.2s"
               >
                 {category}
               </Button>
             ))}
           </HStack>
 
-          <Text color="black" mb={4} textAlign="center">
-            {filteredProducts.length} producto{filteredProducts.length !== 1 ? "s" : ""} encontrado{filteredProducts.length !== 1 ? "s" : ""}
+          <Text color="black" mb={4} textAlign="center" fontWeight="500">
+            {filteredProducts.length} producto{filteredProducts.length !== 1 ? "s" : ""}{" "}
+            encontrado{filteredProducts.length !== 1 ? "s" : ""}
           </Text>
 
-          {/* Grid de productos */}
+          {/* Grid */}
           {filteredProducts.length > 0 ? (
             <SimpleGrid columns={{ base: 1, md: 2, lg: 3, xl: 4 }} spacing={6}>
               {filteredProducts.map((product) => (
@@ -270,12 +319,12 @@ export default function HomePage() {
                   borderRadius="lg"
                   overflow="hidden"
                   p={4}
-                  bg="gray.900"
-                  boxShadow="0 0 10px rgba(92, 33, 43, 0.3)"
+                  bg="white"
+                  boxShadow="0 4px 10px rgba(92, 33, 43, 0.2)"
                   transition="all 0.3s"
                   _hover={{
                     transform: "scale(1.03)",
-                    boxShadow: "0 0 20px rgba(163, 170, 255, 0.4)",
+                    boxShadow: "0 8px 20px rgba(163, 170, 255, 0.4)",
                     borderColor: "#a3aaffff",
                     cursor: "pointer",
                   }}
@@ -312,21 +361,22 @@ export default function HomePage() {
                     objectFit="contain"
                     mb={4}
                     borderRadius="md"
+                    bg="gray.50"
                   />
 
                   <VStack align="start" spacing={2}>
-                    <Text fontWeight="bold" fontSize="lg" noOfLines={1} color="white">
+                    <Text fontWeight="bold" fontSize="lg" noOfLines={1} color="black">
                       {product.name}
                     </Text>
-                    <Text color="gray.400" fontSize="sm" noOfLines={2}>
+                    <Text color="gray.600" fontSize="sm" noOfLines={2}>
                       {product.description}
                     </Text>
-                    <Text fontWeight="bold" color="#a3aaffff" fontSize="2xl">
+                    <Text fontWeight="bold" color="#5c212b" fontSize="2xl">
                       ${product.price}
                     </Text>
 
                     {product.stock !== undefined && (
-                      <Text fontSize="xs" color={product.stock > 0 ? "green.400" : "red.400"}>
+                      <Text fontSize="xs" color={product.stock > 0 ? "green.500" : "red.500"}>
                         {product.stock > 0 ? `${product.stock} disponibles` : "Agotado"}
                       </Text>
                     )}
@@ -342,7 +392,7 @@ export default function HomePage() {
                         size="lg"
                         isDisabled={product.stock === 0}
                       >
-                        Agregar al carrito
+                        🛒 Agregar al carrito
                       </Button>
                     )}
                   </VStack>
@@ -351,7 +401,7 @@ export default function HomePage() {
             </SimpleGrid>
           ) : (
             <Box textAlign="center" py={10}>
-              <Text color="white" fontSize="xl" mb={4}>
+              <Text color="black" fontSize="xl" mb={4}>
                 No se encontraron productos
               </Text>
               {(selectedCategory !== "Todos" || searchTerm) && (
@@ -371,8 +421,8 @@ export default function HomePage() {
           )}
         </Box>
 
- 
-        {userRole === "admin" && (
+        {/* Botón flotante cliente */}
+        {userRole === "client" && (
           <Button
             position="fixed"
             bottom="30px"
@@ -385,7 +435,7 @@ export default function HomePage() {
             borderRadius="full"
             fontSize="40px"
             fontWeight="bold"
-            boxShadow="0 0 15px rgba(0,0,0,0.4)"
+            boxShadow="0 0 20px rgba(92, 33, 43, 0.5)"
             _hover={{
               transform: "scale(1.15)",
               bg: "#7a2d3b",
@@ -397,7 +447,7 @@ export default function HomePage() {
         )}
       </Box>
 
-      
+      {/* Modal */}
       <ProductFormModal
         isOpen={isModalOpen}
         onClose={closeModal}

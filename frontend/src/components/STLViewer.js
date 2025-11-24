@@ -1,119 +1,177 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   Box, 
   Text, 
   Button, 
-  Spinner, 
   VStack, 
-  Heading 
+  Heading,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
+  Badge,
+  HStack,
 } from '@chakra-ui/react';
+import { DownloadIcon, ViewIcon } from '@chakra-ui/icons';
 
-// Componente SIMPLE que evita Three.js
 const STLViewer = ({ url }) => {
-  const [loading, setLoading] = useState(false);
-  const [fileInfo, setFileInfo] = useState(null);
+  const [viewerMode, setViewerMode] = useState('info'); // 'info' o 'viewer'
 
-  useEffect(() => {
-    const checkSTLFile = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(url, { method: 'HEAD' });
-        
-        if (response.ok) {
-          const size = response.headers.get('content-length');
-          setFileInfo({
-            size: size ? `${(size / 1024 / 1024).toFixed(2)} MB` : 'Desconocido',
-            type: 'STL',
-            url: url
-          });
-        } else {
-          throw new Error('Archivo no disponible');
-        }
-      } catch (err) {
-        console.error('Error verificando STL:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (url) checkSTLFile();
-  }, [url]);
-
-  if (loading) {
+  if (!url) {
     return (
       <Box 
-        height="400px" 
+        height="500px" 
         display="flex" 
         alignItems="center" 
         justifyContent="center"
-        bg="gray.800"
-        borderRadius="md"
-        flexDirection="column"
+        bg="black"
+        borderRadius="lg"
+        border="4px solid #5c212b"
       >
-        <Spinner size="xl" color="purple.500" />
-        <Text mt={3} color="white">Verificando archivo 3D...</Text>
+        <Text color="white">No hay modelo 3D disponible</Text>
       </Box>
     );
   }
 
+  const handleDownload = () => {
+    console.log("📥 Descargando STL desde:", url);
+    window.open(url, '_blank');
+  };
+
   return (
-    <Box 
-      height="400px" 
-      bg="#000000"
-      borderRadius="md"
-      border="8px solid #5c212b"
-      borderColor="#000000"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      flexDirection="column"
-      p={6}
-    >
-      <VStack spacing={4} textAlign="center">
-        <Box fontSize="6xl">🎮</Box>
-        <Heading size="md" color="white">Vista 3D Disponible</Heading>
-        
-        {fileInfo && (
-          <VStack spacing={2} color="gray.300">
-            <Text>Tipo: <strong>{fileInfo.type}</strong></Text>
-            <Text>Tamaño: <strong>{fileInfo.size}</strong></Text>
-          </VStack>
-        )}
-        
-        <Text color="white" fontSize="sm" textAlign="center">
-          El modelo 3D está listo para descargar y visualizar en cualquier software 3D
-        </Text>
-        
-        <VStack spacing={3} mt={4}>
-          <Button 
-            colorScheme="#5c212b"
-            bg="#5c212b" 
-            _hover={{ 
-                bg: "#5c212b", 
-                transform: "translateY(-2px)",
-                boxShadow: "lg"
+    <Box>
+      <Tabs 
+        variant="enclosed" 
+        colorScheme="purple"
+        onChange={(index) => setViewerMode(index === 0 ? 'info' : 'viewer')}
+      >
+        <TabList borderColor="#5c212b">
+          <Tab 
+            _selected={{ 
+              color: 'white', 
+              bg: '#5c212b',
+              borderColor: '#5c212b'
             }}
-            onClick={() => window.open(url, '_blank')}
-            leftIcon={<Text>📥</Text>}
+            fontWeight="bold"
           >
-            Descargar Archivo STL
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            colorScheme="blue"
-            onClick={() => window.open('https://www.meshlab.net/', '_blank')}
-            size="sm"
+            📋 Información
+          </Tab>
+          <Tab 
+            _selected={{ 
+              color: 'white', 
+              bg: '#5c212b',
+              borderColor: '#5c212b'
+            }}
+            fontWeight="bold"
           >
-            Abrir con MeshLab (Gratis)
-          </Button>
-        </VStack>
-        
-        <Text color="gray.500" fontSize="xs" mt={4}>
-          💡 Recomendamos: MeshLab, Blender o cualquier visualizador STL
-        </Text>
-      </VStack>
+            🎮 Vista 3D Interactiva
+          </Tab>
+        </TabList>
+
+        <TabPanels>
+          {/* Panel de información */}
+          <TabPanel p={0}>
+            <Box 
+              minHeight="500px" 
+              bg="black"
+              borderRadius="0 0 lg lg"
+              border="4px solid #5c212b"
+              borderTop="none"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              p={8}
+            >
+              <VStack spacing={6} textAlign="center">
+                <Box fontSize="8xl">🎮</Box>
+                
+                <Heading size="xl" color="white">
+                  Vista 3D Disponible
+                </Heading>
+
+                <HStack spacing={4}>
+                  <Badge 
+                    colorScheme="purple" 
+                    fontSize="md" 
+                    px={4} 
+                    py={2} 
+                    borderRadius="full"
+                    bg="#a3aaffff"
+                    color="black"
+                  >
+                    📁 STL
+                  </Badge>
+                </HStack>
+
+                <Text color="gray.300" fontSize="md" maxW="500px">
+                  Haz clic en la pestaña "Vista 3D Interactiva" para explorar el modelo 
+                  en tu navegador, o descárgalo para verlo en tu software favorito.
+                </Text>
+
+                <Button 
+                  width="100%"
+                  maxW="400px"
+                  size="lg"
+                  height="60px"
+                  bg="#5c212b"
+                  color="white"
+                  _hover={{ 
+                    bg: "#7a2d3b", 
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 0 20px rgba(92, 33, 43, 0.5)"
+                  }}
+                  onClick={handleDownload}
+                  leftIcon={<DownloadIcon />}
+                >
+                  Descargar Archivo STL
+                </Button>
+              </VStack>
+            </Box>
+          </TabPanel>
+
+          {/* Panel del visor 3D */}
+          <TabPanel p={0}>
+            <Box 
+              height="600px" 
+              bg="black"
+              borderRadius="0 0 lg lg"
+              border="4px solid #5c212b"
+              borderTop="none"
+              overflow="hidden"
+              position="relative"
+            >
+              {/* Método 1: Visor online con ViewSTL */}
+              <iframe
+                src={`https://www.viewstl.com/?embedded&url=${encodeURIComponent(url)}`}
+                width="100%"
+                height="100%"
+                style={{ border: 'none' }}
+                title="STL Viewer"
+              />
+
+              {/* Instrucciones flotantes */}
+              <Box
+                position="absolute"
+                bottom={4}
+                left="50%"
+                transform="translateX(-50%)"
+                bg="blackAlpha.800"
+                color="white"
+                px={4}
+                py={2}
+                borderRadius="md"
+                fontSize="sm"
+                textAlign="center"
+                pointerEvents="none"
+              >
+                🖱️ Arrastra para rotar | 🔍 Scroll para zoom
+              </Box>
+            </Box>
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
     </Box>
   );
 };
