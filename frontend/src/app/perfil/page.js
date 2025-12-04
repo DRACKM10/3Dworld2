@@ -389,15 +389,15 @@ export default function Perfil() {
 
   // ... el resto del JSX permanece igual
   return (
-    <Box minH="100vh" py={8} bg="#121212">
+    <Box  minH="100vh" py={8} >
       {/* Container Principal */}
       <Box 
         maxW="1200px" 
         mx="auto" 
         px={{ base: 4, md: 6 }}
-        border="6px solid #5c212b"
+        border="2px solid #030303ff"
         borderRadius="16px"
-        bg="#1a1a1ade"
+        bg="#797777de"
         overflow="hidden"
       >
         {/* Banner */}

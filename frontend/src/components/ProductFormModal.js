@@ -298,9 +298,7 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
     <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <ModalOverlay />
       <ModalContent bg="white" color="black">
-        <ModalHeader color="#5c212b">
-          {editProduct ? "Editar" : userRole === "client" ? "Publicar" : "Agregar"} Producto
-        </ModalHeader>
+        <ModalHeader>{editProduct ? "Editar" : "Agregar"} Producto</ModalHeader>
         <ModalCloseButton />
         <form onSubmit={handleSubmit}>
           <ModalBody>

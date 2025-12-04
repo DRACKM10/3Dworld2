@@ -37,20 +37,16 @@ export default function HomePage() {
   const [userRole, setUserRole] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Estados del modal
+  // Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
 
-  // ✅ Detectar rol con listener de cambios
+  // Detectar rol
   useEffect(() => {
     const checkAuth = () => {
       const role = localStorage.getItem("userRole");
       const token = localStorage.getItem("token");
-      
-      console.log("🔍 HomePage - Verificando autenticación:");
-      console.log("   Rol:", role || "ninguno");
-      console.log("   Token:", token ? "presente" : "ausente");
-      
+
       setUserRole(role);
       setIsLoggedIn(!!token);
     };
@@ -58,7 +54,6 @@ export default function HomePage() {
     checkAuth();
 
     const handleStorageChange = () => {
-      console.log("🔄 HomePage detectó cambio en localStorage");
       checkAuth();
     };
 
@@ -78,8 +73,6 @@ export default function HomePage() {
         const response = await fetch("http://localhost:8000/api/products");
         if (!response.ok) throw new Error("Error al cargar productos");
         const data = await response.json();
-
-        console.log("📦 Productos cargados:", data.length);
 
         setProducts(data);
         setFilteredProducts(data);
@@ -104,7 +97,7 @@ export default function HomePage() {
     fetchProducts();
   }, [toast]);
 
-  // Filtrado
+  // Filtros
   useEffect(() => {
     let result = products;
 
@@ -150,13 +143,12 @@ export default function HomePage() {
     closeModal();
   };
 
-  // Eliminar
+  // Eliminar producto
   const handleDeleteProduct = async (id, e) => {
     e.stopPropagation();
-    
+
     const token = localStorage.getItem("token");
-    console.log("🗑️ Intentando eliminar producto:", id);
-    
+
     if (!confirm("¿Estás seguro de eliminar este producto?")) return;
 
     try {
@@ -176,14 +168,13 @@ export default function HomePage() {
       setFilteredProducts((prev) => prev.filter((p) => p.id !== id));
 
       toast({
-        title: "✅ Producto eliminado",
+        title: "Producto eliminado",
         status: "success",
         duration: 2000,
       });
     } catch (err) {
-      console.error("❌ Error:", err);
       toast({
-        title: "❌ Error",
+        title: "Error",
         description: err.message,
         status: "error",
       });
@@ -193,9 +184,10 @@ export default function HomePage() {
   // Agregar al carrito
   const handleAddToCart = (product, e) => {
     e.stopPropagation();
+
     addToCart(product);
     toast({
-      title: "✅ Agregado al carrito",
+      title: "Agregado al carrito",
       description: `${product.name} agregado exitosamente`,
       status: "success",
       duration: 2000,
@@ -227,39 +219,46 @@ export default function HomePage() {
     <>
       <Box minH="100vh" p={4} bg="white">
         <Box maxW="1400px" mx="auto">
-          {/* Header */}
-          <Box mb={8} textAlign="center">
-            <Heading 
-              color="#5c212b" 
-              size="2xl" 
-              mb={2}
-              textShadow="2px 2px 4px rgba(0,0,0,0.1)"
-            >
-              Bienvenido a 3Dworld
-            </Heading>
-            <Text color="black" fontSize="lg" fontWeight="500">
-              {userRole === "admin"
-                ? "🔧 Panel de administración de productos"
-                : "Descubre nuestros increíbles productos de impresión 3D"}
-            </Text>
 
-            {/* Botón admin */}
-            {userRole === "admin" && (
-              <Button
-                mt={4}
-                bg="#5c212b"
+          {/* 🔥 Banner superior */}
+          <Box
+            w="100%"
+            h="250px"
+            bgImage="url('/images/banner.jpg')"
+            bgSize="cover"
+            bgPosition="center"
+            borderRadius="lg"
+            mb={8}
+            boxShadow="0 4px 15px rgba(0,0,0,0.3)"
+            position="relative"
+          >
+            <Flex
+              w="100%"
+              h="100%"
+              align="center"
+              justify="center"
+              direction="column"
+              bg="rgba(0,0,0,0.35)"
+              borderRadius="lg"
+            >
+              <Heading 
                 color="white"
-                _hover={{ bg: "#7a2d3b", transform: "scale(1.05)" }}
-                onClick={openCreateModal}
-                size="lg"
-                boxShadow="0 4px 10px rgba(92, 33, 43, 0.3)"
+                size="2xl"
+                mb={2}
+                textShadow="2px 2px 5px rgba(0,0,0,0.7)"
               >
-                ➕ Agregar nuevo producto
-              </Button>
-            )}
+                Bienvenido a 3Dworld
+              </Heading>
+
+              <Text color="white" fontSize="lg" fontWeight="500">
+                {userRole === "admin"
+                  ? "🔧 Panel de administración de productos"
+                  : "Descubre nuestros increíbles productos de impresión 3D"}
+              </Text>
+            </Flex>
           </Box>
 
-          {/* Búsqueda */}
+          {/* Buscador */}
           <Box mb={6}>
             <InputGroup size="lg">
               <InputLeftElement pointerEvents="none">
@@ -272,9 +271,9 @@ export default function HomePage() {
                 bg="white"
                 color="black"
                 border="2px solid #5c212b"
-                _focus={{ 
-                  borderColor: "#a3aaffff", 
-                  boxShadow: "0 0 10px rgba(163, 170, 255, 0.5)" 
+                _focus={{
+                  borderColor: "#a3aaffff",
+                  boxShadow: "0 0 10px rgba(163, 170, 255, 0.5)",
                 }}
                 _placeholder={{ color: "gray.500" }}
               />
@@ -304,8 +303,9 @@ export default function HomePage() {
           </HStack>
 
           <Text color="black" mb={4} textAlign="center" fontWeight="500">
-            {filteredProducts.length} producto{filteredProducts.length !== 1 ? "s" : ""}{" "}
-            encontrado{filteredProducts.length !== 1 ? "s" : ""}
+            {filteredProducts.length} producto
+            {filteredProducts.length !== 1 ? "s" : ""} encontrado
+            {filteredProducts.length !== 1 ? "s" : ""}
           </Text>
 
           {/* Grid */}
@@ -330,7 +330,7 @@ export default function HomePage() {
                   }}
                   onClick={() => router.push(`/productos/${product.id}`)}
                 >
-                  {/* Botones Admin */}
+                  {/* Botones admin */}
                   {userRole === "admin" && (
                     <Flex position="absolute" top={2} right={2} gap={2} zIndex={10}>
                       <IconButton
@@ -381,7 +381,6 @@ export default function HomePage() {
                       </Text>
                     )}
 
-                    {/* Botón cliente */}
                     {userRole !== "admin" && (
                       <Button
                         bg="#5c212b"

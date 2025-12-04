@@ -37,9 +37,9 @@ export default function CartPage() {
               <Box
                 key={item.id}
                 p={4}
-                borderWidth="1px"
+                borderWidth="2px solid #121212"
                 borderRadius="md"
-                bg="#292929e0"
+                bg="#dadadaff"
                 boxShadow="md"
               >
                 <HStack justify="space-between" align="center">
@@ -96,10 +96,10 @@ export default function CartPage() {
           </VStack>
 
           {/* Resumen y acciones */}
-          <Box p={6} borderWidth="1px" borderRadius="md" bg="#292929e0">
+          <Box p={6} borderWidth="1px" borderRadius="md" bg="#dadadaff" boxShadow="md">
             <HStack justify="space-between" mb={4}>
               <Text fontSize="2xl" fontWeight="bold">Total:</Text>
-              <Text fontSize="2xl" fontWeight="bold" color="white">
+              <Text fontSize="2xl" fontWeight="bold" color="black">
                 ${getCartTotal().toFixed(2)}
               </Text>
             </HStack>
