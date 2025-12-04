@@ -19,15 +19,36 @@ export default function CommentsSection({ productId, currentUser }) {
   useEffect(() => {
     if (currentUser) {
       setLocalUser(currentUser);
+      console.log('👤 Usuario de props:', currentUser);
     } else {
-      // Intentar obtener del localStorage
-      const userData = localStorage.getItem("user");
+      // Intentar obtener del localStorage - primero intenta "user" completo
+      let userData = localStorage.getItem("user");
       if (userData) {
         try {
-          setLocalUser(JSON.parse(userData));
+          const parsed = JSON.parse(userData);
+          setLocalUser(parsed);
+          console.log('👤 Usuario del localStorage (objeto completo):', parsed);
+          return;
         } catch (error) {
           console.error("❌ Error parsing user data:", error);
         }
+      }
+      
+      // Si no hay objeto completo, construir desde datos dispersos
+      const userId = localStorage.getItem("userId");
+      const userName = localStorage.getItem("usuario");
+      const userEmail = localStorage.getItem("userEmail");
+      
+      if (userId || userName) {
+        const builtUser = {
+          id: userId,
+          username: userName,
+          name: userName,
+          email: userEmail || '',
+          role: localStorage.getItem("userRole") || 'client'
+        };
+        setLocalUser(builtUser);
+        console.log('👤 Usuario construido desde datos dispersos:', builtUser);
       }
     }
   }, [currentUser]);
@@ -52,7 +73,8 @@ export default function CommentsSection({ productId, currentUser }) {
           rating: c.rating || 0,
           comment: c.comment_text || c.comment || '',
           date: c.created_at || c.date || new Date().toISOString(),
-          verified: !!c.user_id
+          verified: !!c.user_id,
+          user_id: c.user_id
         })));
         if (data.stats) setStats(data.stats);
       } catch (err) {
@@ -115,7 +137,8 @@ export default function CommentsSection({ productId, currentUser }) {
           rating: created.rating || newRating,
           comment: created.comment_text || newComment,
           date: created.created_at || new Date().toISOString(),
-          verified: !!created.user_id
+          verified: !!created.user_id,
+          user_id: created.user_id
         };
 
         setComments(prev => [mapped, ...prev]);
@@ -176,6 +199,62 @@ export default function CommentsSection({ productId, currentUser }) {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  const handleDeleteComment = async (commentId, commentUserId) => {
+    // Verificar que el usuario actual sea el propietario del comentario
+    console.log('🔍 Intentando eliminar comentario:', { 
+      userId: localUser?.id, 
+      commentUserId, 
+      localUser 
+    });
+    
+    if (!localUser?.id || localUser.id.toString() !== commentUserId?.toString()) {
+      showNotification("No tienes permisos para eliminar este comentario", "warning");
+      return;
+    }
+
+    if (!window.confirm("¿Estás seguro de que deseas eliminar este comentario?")) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        showNotification('Error de autenticación. Vuelve a iniciar sesión.', 'warning');
+        return;
+      }
+
+      const res = await fetch(`http://localhost:8000/api/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        const msg = data?.error || data?.message || 'Error al eliminar comentario';
+        showNotification(msg, 'warning');
+        return;
+      }
+
+      // Remover el comentario de la lista
+      setComments(prev => prev.filter(c => c.id !== commentId));
+      
+      // Actualizar estadísticas
+      setStats(prev => ({
+        totalComments: prev.totalComments - 1,
+        averageRating: prev.totalComments > 1 
+          ? Math.round(prev.averageRating * (prev.totalComments / (prev.totalComments - 1)) * 10) / 10
+          : 0
+      }));
+
+      showNotification("Comentario eliminado correctamente", "success");
+    } catch (err) {
+      console.error('Error deleting comment:', err);
+      showNotification('Error al eliminar comentario', 'warning');
+    }
   };
 
   return (
@@ -411,7 +490,7 @@ export default function CommentsSection({ productId, currentUser }) {
               flexWrap: 'wrap',
               gap: '12px',
             }}>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: 1 }}>
                 <div style={{
                   width: '48px',
                   height: '48px',
@@ -457,16 +536,50 @@ export default function CommentsSection({ productId, currentUser }) {
                   </p>
                 </div>
               </div>
-              <StarRating rating={comment.rating} />
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <StarRating rating={comment.rating} />
+              </div>
             </div>
 
             <p style={{
               color: '#374151',
               lineHeight: '1.7',
               fontSize: '16px',
+              marginBottom: '16px',
             }}>
               {comment.comment}
             </p>
+
+            {localUser && localUser.id && localUser.id.toString() === comment.user_id?.toString() && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => handleDeleteComment(comment.id, comment.user_id)}
+                  style={{
+                    padding: '6px 12px',
+                    background: '#5c212b',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    whiteSpace: 'nowrap',
+                  }}
+                  onMouseOver={(e) => {
+                    e.target.style.background = '#7e444dff';
+                    e.target.style.transform = 'scale(1.05)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.background = '#5c212b';
+                    e.target.style.transform = 'scale(1)';
+                  }}
+                  title="Eliminar comentario"
+                >
+                  🗑️ Eliminar
+                </button>
+              </div>
+            )}
           </div>
         ))}
       </div>

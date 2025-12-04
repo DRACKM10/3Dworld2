@@ -58,17 +58,35 @@ export const createComment = async (commentData) => {
 };
 
 /**
- * Eliminar comentario
+ * Eliminar comentario (solo si el usuario es el propietario)
  */
 export const deleteComment = async (commentId, userId) => {
   try {
-    const { error } = await supabase
+    // Primero obtener el comentario para verificar que pertenece al usuario
+    const { data: comment, error: fetchError } = await supabase
+      .from('comments')
+      .select('id, user_id')
+      .eq('id', parseInt(commentId))
+      .single();
+
+    if (fetchError || !comment) {
+      console.error('❌ Comentario no encontrado:', fetchError);
+      return false;
+    }
+
+    // Verificar que el user_id coincida
+    if (comment.user_id !== userId.toString()) {
+      console.error('❌ Usuario no autorizado para eliminar este comentario');
+      return false;
+    }
+
+    // Proceder a eliminar
+    const { error: deleteError } = await supabase
       .from('comments')
       .delete()
-      .eq('id', parseInt(commentId))
-      .eq('user_id', userId.toString());
+      .eq('id', parseInt(commentId));
 
-    if (error) throw error;
+    if (deleteError) throw deleteError;
     return true;
   } catch (error) {
     console.error('❌ Error en deleteComment:', error);

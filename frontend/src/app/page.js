@@ -207,7 +207,7 @@ export default function HomePage() {
       >
         <VStack>
           <Spinner size="xl" color="#5c212b" thickness="4px" />
-          <Text color="black" mt={4} fontSize="lg">
+          <Text color="white" mt={4} fontSize="lg">
             Cargando productos...
           </Text>
         </VStack>

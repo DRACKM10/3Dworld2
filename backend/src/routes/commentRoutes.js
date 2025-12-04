@@ -2,7 +2,8 @@
 import express from "express";
 import {
   getProductComments,
-  addComment
+  addComment,
+  deleteComment
 } from "../controllers/commentController.js";
 import authenticateToken from "../middleware/authenticateToken.js";
 
@@ -13,5 +14,8 @@ router.get("/product/:productId", getProductComments);
 
 // 🔐 Ruta protegida - Crear comentario
 router.post("/product/:productId", authenticateToken, addComment);
+
+// 🔐 Ruta protegida - Eliminar comentario (solo el propietario)
+router.delete("/:commentId", authenticateToken, deleteComment);
 
 export default router;

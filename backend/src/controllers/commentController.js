@@ -1,7 +1,8 @@
 // controllers/commentController.js
 import { 
   getCommentsByProduct, 
-  createComment, 
+  createComment,
+  deleteComment as deleteCommentModel,
   getCommentStats 
 } from "../models/commentModel.js";
 
@@ -72,8 +73,42 @@ export const addComment = async (req, res) => {
   }
 };
 
+/**
+ * Eliminar comentario (solo el propietario)
+ */
+export const deleteComment = async (req, res) => {
+  try {
+    const commentId = req.params.commentId;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Usuario no autenticado" });
+    }
+
+    console.log('🗑️ Intentando eliminar comentario:', {
+      commentId,
+      userId
+    });
+
+    const result = await deleteCommentModel(commentId, userId);
+
+    if (!result) {
+      return res.status(403).json({ error: "No tienes permisos para eliminar este comentario" });
+    }
+
+    res.json({ 
+      success: true, 
+      message: "Comentario eliminado correctamente" 
+    });
+  } catch (err) {
+    console.error("❌ Error en deleteComment:", err);
+    res.status(500).json({ error: "Error al eliminar comentario: " + err.message });
+  }
+};
+
 // Solo exportamos las funciones básicas
 export default {
   getProductComments,
-  addComment
+  addComment,
+  deleteComment
 };
