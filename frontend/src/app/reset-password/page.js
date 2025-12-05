@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   Box,
@@ -9,7 +9,6 @@ import {
   FormLabel,
   Input,
   Button,
-  Text,
   VStack,
   useToast,
   InputGroup,
@@ -18,7 +17,7 @@ import {
 } from "@chakra-ui/react";
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
 
-export default function ResetPassword() {
+function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const toast = useToast();
@@ -76,7 +75,7 @@ export default function ResetPassword() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/users/reset-password", {
+      const response = await fetch("https://threedworld2.onrender.com/api/users/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, newPassword }),
@@ -87,14 +86,14 @@ export default function ResetPassword() {
       if (!response.ok) throw new Error(data.error);
 
       toast({
-  title: "✅ Contraseña actualizada",
-  description: "Ya puedes iniciar sesión con tu nueva contraseña",
-  status: "success",
-});
+        title: "✅ Contraseña actualizada",
+        description: "Ya puedes iniciar sesión con tu nueva contraseña",
+        status: "success",
+      });
 
-setTimeout(() => {
-  router.push("/");  // ← Esto lo lleva al home
-}, 2000);
+      setTimeout(() => {
+        router.push("/");
+      }, 2000);
     } catch (error) {
       toast({
         title: "❌ Error",
@@ -112,7 +111,6 @@ setTimeout(() => {
       display="flex"
       alignItems="center"
       justifyContent="center"
-      
       p={4}
     >
       <Box
@@ -142,9 +140,9 @@ setTimeout(() => {
                   _placeholder={{ color: "gray.500" }}
                   border="2px solid #333333"
                   _focus={{
-                      borderColor: "#5c212b",
-                      boxShadow: "0 0 10px #5c212b",
-                    }}
+                    borderColor: "#5c212b",
+                    boxShadow: "0 0 10px #5c212b",
+                  }}
                 />
                 <InputRightElement>
                   <IconButton
@@ -166,14 +164,13 @@ setTimeout(() => {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Repite tu contraseña"
                 bg="#1a1a1a"
-                  color="white"
-                  _placeholder={{ color: "gray.500" }}
-                  border="2px solid #333333"
-                  _focus={{
-                      borderColor: "#5c212b",
-                      boxShadow: "0 0 10px #5c212b",
-                    }}
-               
+                color="white"
+                _placeholder={{ color: "gray.500" }}
+                border="2px solid #333333"
+                _focus={{
+                  borderColor: "#5c212b",
+                  boxShadow: "0 0 10px #5c212b",
+                }}
               />
             </FormControl>
 
@@ -189,5 +186,17 @@ setTimeout(() => {
         </form>
       </Box>
     </Box>
+  );
+}
+
+export default function ResetPassword() {
+  return (
+    <Suspense fallback={
+      <Box minH="100vh" display="flex" alignItems="center" justifyContent="center">
+        <Heading color="white">Cargando...</Heading>
+      </Box>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Flex, Button, Box, Heading, Text } from "@chakra-ui/react";
 import { useSearchParams, useRouter } from 'next/navigation';
 import ProductList from "../../components/ProductList";
 import ProductFormModal from "../../components/ProductFormModal";
 import ProtectedRoute from "../../components/ProtectedRoute";
 
-export default function ProductosAdmin() {
+function ProductosContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [editProduct, setEditProduct] = useState(null);
@@ -15,7 +15,6 @@ export default function ProductosAdmin() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // ✅ Detectar si viene con parámetro ?edit=ID
   useEffect(() => {
     const editId = searchParams.get('edit');
     if (editId) {
@@ -24,10 +23,9 @@ export default function ProductosAdmin() {
     }
   }, [searchParams]);
 
-  // ✅ Obtener producto para editar
   const fetchProductToEdit = async (id) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/products/${id}`);
+      const response = await fetch(`https://threedworld2.onrender.com/api/products/${id}`);
       if (!response.ok) throw new Error("Producto no encontrado");
       
       const product = await response.json();
@@ -43,8 +41,6 @@ export default function ProductosAdmin() {
   const handleAddOrUpdateProduct = (product) => {
     setRefreshKey(prev => prev + 1);
     console.log('✅ Producto guardado, recargando lista...');
-    
-    // ✅ Limpiar parámetros de URL
     router.push('/productos');
   };
 
@@ -56,58 +52,68 @@ export default function ProductosAdmin() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditProduct(null);
-    
-    // ✅ Limpiar parámetros de URL si existen
     router.push('/productos');
   };
 
   return (
+    <Box
+      p={4}
+      bg="black"
+      maxW="1200px"
+      mx="auto"
+      position="relative"
+      zIndex={1}
+      minHeight="100vh"
+    >
+      <Flex justify="space-between" align="center" mb={6} flexWrap="wrap" gap={4}>
+        <Box>
+          <Heading color="white" mb={2}>
+            🔧 Panel de Administración
+          </Heading>
+          <Text color="white">
+            Gestiona todos los productos de la tienda
+          </Text>
+        </Box>
+        
+        <Button 
+          color="white" 
+          bg="#5c212b" 
+          _hover={{ bg:"#7a2d3b", transform: "scale(1.05)" }} 
+          onClick={() => {
+            setEditProduct(null);
+            setIsModalOpen(true);
+          }}
+          size="lg"
+        >
+          ➕ Agregar Producto
+        </Button>
+      </Flex>
+
+      <ProductFormModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onAddProduct={handleAddOrUpdateProduct}
+        editProduct={editProduct}
+      />
+
+      <ProductList 
+        refreshTrigger={refreshKey}
+        onEdit={handleEdit}
+      />
+    </Box>
+  );
+}
+
+export default function ProductosAdmin() {
+  return (
     <ProtectedRoute requiredRole="admin">
-      <Box
-        p={4}
-        bg="black"
-        maxW="1200px"
-        mx="auto"
-        position="relative"
-        zIndex={1}
-        minHeight="100vh"
-      >
-        <Flex justify="space-between" align="center" mb={6} flexWrap="wrap" gap={4}>
-          <Box>
-            <Heading color="white" mb={2}>
-              🔧 Panel de Administración
-            </Heading>
-            <Text color="white">
-              Gestiona todos los productos de la tienda
-            </Text>
-          </Box>
-          
-          <Button 
-            color="white" 
-            bg="#5c212b" 
-            _hover={{ bg:"#7a2d3b", transform: "scale(1.05)" }} 
-            onClick={() => {
-              setEditProduct(null);
-              setIsModalOpen(true);
-            }}
-            size="lg"
-          >
-            ➕ Agregar Producto
-          </Button>
-        </Flex>
-
-        <ProductFormModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          onAddProduct={handleAddOrUpdateProduct}
-          editProduct={editProduct}
-        />
-
-        <ProductList 
-          refreshTrigger={refreshKey}
-          onEdit={handleEdit}
-        />
-      </Box>
+      <Suspense fallback={
+        <Box minH="100vh" display="flex" alignItems="center" justifyContent="center">
+          <Heading color="white">Cargando productos...</Heading>
+        </Box>
+      }>
+        <ProductosContent />
+      </Suspense>
     </ProtectedRoute>
   );
 }
