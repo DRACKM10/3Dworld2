@@ -14,6 +14,8 @@ import {
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export default function ConfirmacionPage() {
   const router = useRouter();
   const toast = useToast();
@@ -37,11 +39,14 @@ export default function ConfirmacionPage() {
       setPagoData(pagoInfo);
 
       // Calcular total
-      const total = cartItems.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
+      const total = cartItems.reduce(
+        (sum, item) => sum + item.price * (item.quantity || 1),
+        0
+      );
 
       try {
         // Enviar pedido al backend
-        const response = await fetch("http://localhost:8000/api/orders", {
+        const response = await fetch(`${API_URL}/api/orders`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -79,7 +84,6 @@ export default function ConfirmacionPage() {
           status: "success",
           duration: 5000,
         });
-
       } catch (error) {
         console.error("❌ Error:", error);
         toast({

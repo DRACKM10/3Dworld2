@@ -7,6 +7,11 @@ import { EditIcon, DeleteIcon } from '@chakra-ui/icons';
 import { useRouter } from 'next/navigation';
 import { StlViewer } from "react-stl-viewer";
 
+// Helper para centralizar llamadas a la API
+const apiFetch = (endpoint, options = {}) => {
+  return fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, options);
+};
+
 export default function ProductCard({ product, onEdit, onDelete }) {
   const { addToCart } = useCart();
   const router = useRouter();
@@ -34,13 +39,13 @@ export default function ProductCard({ product, onEdit, onDelete }) {
 
   const handleDelete = async (e) => {
     e.stopPropagation();
-    
+
     if (!confirm(`¿Eliminar "${product.name}"?`)) return;
 
     try {
       const token = localStorage.getItem("token");
-      
-      const response = await fetch(`http://localhost:8000/api/products/${product.id}`, {
+
+      const response = await apiFetch(`/api/products/${product.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -102,9 +107,7 @@ export default function ProductCard({ product, onEdit, onDelete }) {
         </HStack>
       )}
 
-      {/* ============================ */}
-      {/* 📌 IMAGEN DEL PRODUCTO */}
-      {/* ============================ */}
+      {/* Imagen del producto */}
       <Image
         src={product.image}
         alt={product.name}
@@ -114,9 +117,7 @@ export default function ProductCard({ product, onEdit, onDelete }) {
         borderRadius="md"
       />
 
-      {/* ============================ */}
-      {/* 🔥 VISOR STL DESDE SUPABASE */}
-      {/* ============================ */}
+      {/* Visor STL */}
       {product.stlFile && (
         <Box
           height="250px"
@@ -133,9 +134,7 @@ export default function ProductCard({ product, onEdit, onDelete }) {
         </Box>
       )}
 
-      {/* ============================ */}
-      {/* INFO DEL PRODUCTO */}
-      {/* ============================ */}
+      {/* Info del producto */}
       <VStack align="start" spacing={2}>
         <Text fontWeight="bold" fontSize="lg" noOfLines={1} color="white">
           {product.name}

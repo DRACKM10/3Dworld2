@@ -15,6 +15,11 @@ import {
 import { SearchIcon, FilterIcon } from 'lucide-react';
 import ProductCard from './ProductCard';
 
+// Helper para centralizar llamadas a la API
+const apiFetch = (endpoint, options = {}) => {
+  return fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, options);
+};
+
 export default function ProductList({ refreshTrigger, onEdit }) {
   const [fetchedProducts, setFetchedProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -27,7 +32,7 @@ export default function ProductList({ refreshTrigger, onEdit }) {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const response = await fetch('http://localhost:8000/api/products');
+        const response = await apiFetch('/api/products');
         if (!response.ok) throw new Error('Error al fetch productos');
         const data = await response.json();
         setFetchedProducts(data);

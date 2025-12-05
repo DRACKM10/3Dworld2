@@ -36,6 +36,11 @@ const CLIENT_CATEGORIES = [
   "Otro"
 ];
 
+// Helper para centralizar llamadas a la API
+const apiFetch = (endpoint, options = {}) => {
+  return fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, options);
+};
+
 export default function ProductFormModal({ isOpen, onClose, onAddProduct, editProduct }) {
   const [formData, setFormData] = useState({
     name: "",
@@ -53,13 +58,11 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
 
   const toast = useToast();
 
-  // ✅ Detectar rol del usuario
   useEffect(() => {
     const role = localStorage.getItem("userRole");
     setUserRole(role);
   }, []);
 
-  // Cargar datos si es edición
   useEffect(() => {
     if (editProduct) {
       setFormData({
@@ -70,7 +73,7 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
         stock: editProduct.stock || "",
       });
       setPreviewImage(editProduct.image || "");
-      
+
       if (editProduct.stlFile || editProduct.stl_file) {
         const stlUrl = editProduct.stlFile || editProduct.stl_file;
         setUploadedSTL({
@@ -141,19 +144,18 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
     setUploadingSTL(true);
 
     try {
-      const formData = new FormData();
-      formData.append("stl", file);
-      formData.append("productId", editProduct?.id || "temp");
+      const formDataSTL = new FormData();
+      formDataSTL.append("stl", file);
+      formDataSTL.append("productId", editProduct?.id || "temp");
 
       const token = localStorage.getItem("token");
-      const url = "http://localhost:8000/api/products/upload-stl";
 
-      const response = await fetch(url, {
+      const response = await apiFetch("/api/products/upload-stl", {
         method: "POST",
         headers: {
           Authorization: token ? `Bearer ${token}` : undefined,
         },
-        body: formData,
+        body: formDataSTL,
       });
 
       if (!response.ok) {
@@ -207,7 +209,6 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
       return;
     }
 
-    // ✅ Validar categoría para clientes
     if (userRole === "client" && !formData.category) {
       toast({
         title: "❌ Error",
@@ -239,13 +240,13 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
       }
 
       const url = editProduct
-        ? `http://localhost:8000/api/products/${editProduct.id}`
-        : "http://localhost:8000/api/products";
-      
+        ? `/api/products/${editProduct.id}`
+        : "/api/products";
+
       const method = editProduct ? "PUT" : "POST";
       const token = localStorage.getItem("token");
 
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method,
         headers: {
           Authorization: token ? `Bearer ${token}` : undefined,
@@ -266,7 +267,7 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
       }
 
       onAddProduct(result.product);
-      
+
       toast({
         title: editProduct ? "✅ Producto actualizado" : "✅ Producto creado",
         description: userRole === "client" 
@@ -303,7 +304,6 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
         <form onSubmit={handleSubmit}>
           <ModalBody>
             <VStack spacing={4}>
-              {/* ✅ Alerta informativa para clientes */}
               {userRole === "client" && !editProduct && (
                 <Alert status="info" borderRadius="md">
                   <AlertIcon />
@@ -352,7 +352,6 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
                 />
               </FormControl>
 
-              {/* ✅ Categoría: Select para clientes, Input para admin */}
               <FormControl isRequired={userRole === "client"}>
                 <FormLabel>Categoría</FormLabel>
                 {userRole === "client" ? (
@@ -366,9 +365,7 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
                     placeholder="Selecciona una categoría"
                   >
                     {CLIENT_CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
+                      <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </Select>
                 ) : (
@@ -398,15 +395,8 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
               </FormControl>
 
               <FormControl isRequired={!editProduct}>
-                <FormLabel>
-                  Imagen {editProduct && "(dejar vacío para mantener actual)"}
-                </FormLabel>
-                <Input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handleImageChange}
-                  border="2px solid #5c212b"
-                />
+                <FormLabel>Imagen {editProduct && "(dejar vacío para mantener actual)"}</FormLabel>
+                <Input type="file" accept="image/*" onChange={handleImageChange} border="2px solid #5c212b" />
               </FormControl>
 
               {previewImage && (
@@ -418,7 +408,6 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
                 </Box>
               )}
 
-              {/* Archivo STL */}
               <FormControl>
                 <FormLabel>Archivo 3D (Opcional - STL/OBJ/GCODE)</FormLabel>
                 <Input
@@ -437,35 +426,17 @@ export default function ProductFormModal({ isOpen, onClose, onAddProduct, editPr
 
               {uploadedSTL && (
                 <Box width="100%" p={3} bg="gray.50" borderRadius="md" border="2px solid #5c212b">
-                  <Text fontWeight="bold" color="green.500" mb={1}>
-                    ✅ Archivo 3D cargado:
-                  </Text>
+                  <Text fontWeight="bold" color="green.500" mb={1}>✅ Archivo 3D cargado:</Text>
                   <Text fontSize="sm">📁 {uploadedSTL.name}</Text>
-                  <Text fontSize="xs" color="gray.600">
-                    {uploadedSTL.type} - {uploadedSTL.size} MB
-                  </Text>
-                  <Button
-                    size="xs"
-                    colorScheme="red"
-                    mt={2}
-                    onClick={() => setUploadedSTL(null)}
-                  >
-                    Eliminar archivo
-                  </Button>
+                  <Text fontSize="xs" color="gray.600">{uploadedSTL.type} - {uploadedSTL.size} MB</Text>
+                  <Button size="xs" colorScheme="red" mt={2} onClick={() => setUploadedSTL(null)}>Eliminar archivo</Button>
                 </Box>
               )}
             </VStack>
           </ModalBody>
 
           <ModalFooter>
-            <Button
-              variant="ghost"
-              mr={3}
-              onClick={onClose}
-              isDisabled={isLoading || uploadingSTL}
-            >
-              Cancelar
-            </Button>
+            <Button variant="ghost" mr={3} onClick={onClose} isDisabled={isLoading || uploadingSTL}>Cancelar</Button>
             <Button
               bg="#5c212b"
               color="white"

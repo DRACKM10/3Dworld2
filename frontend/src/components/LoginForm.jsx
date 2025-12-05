@@ -23,8 +23,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { GoogleLogin } from "@react-oauth/google";
 import { colors } from "../styles/colors";
-import { color } from "framer-motion";
- 
+
+
+// 🔥 CONSTANTE GLOBAL PARA EL BACKEND
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 
 export default function LoginForm({ onClose, goToRegister }) {
   const router = useRouter();
@@ -40,7 +43,7 @@ export default function LoginForm({ onClose, goToRegister }) {
 
   const handleTogglePassword = () => setShowPassword(!showPassword);
 
-  // Login normal con email y contraseña
+  // Login normal
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorEmail("");
@@ -58,7 +61,7 @@ export default function LoginForm({ onClose, goToRegister }) {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/users/login", {
+      const response = await fetch(`${API_URL}/api/users/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -91,7 +94,7 @@ export default function LoginForm({ onClose, goToRegister }) {
       }
 
       toast({
-        title: "✅ Inicio de sesión exitoso",
+        title: "Inicio de sesión exitoso",
         description: `Bienvenido ${data.user?.username || ""}`,
         status: "success",
         duration: 2000,
@@ -101,9 +104,9 @@ export default function LoginForm({ onClose, goToRegister }) {
         router.push("/");
       }, 1000);
     } catch (error) {
-      console.error("❌ Error en login:", error);
+      console.error("Error en login:", error);
       toast({
-        title: "❌ Error al iniciar sesión",
+        title: "Error al iniciar sesión",
         description: error.message,
         status: "error",
         duration: 3000,
@@ -113,20 +116,19 @@ export default function LoginForm({ onClose, goToRegister }) {
     }
   };
 
+
   // Login con Google
   const handleGoogleSuccess = async (credentialResponse) => {
     setIsGoogleLoading(true);
 
     try {
-      console.log("🔑 Token de Google recibido");
-
       const token = credentialResponse.credential;
 
       if (!token) {
         throw new Error("No se recibió token de Google");
       }
 
-      const response = await fetch("http://localhost:8000/api/users/google", {
+      const response = await fetch(`${API_URL}/api/users/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),
@@ -138,7 +140,6 @@ export default function LoginForm({ onClose, goToRegister }) {
       }
 
       const data = await response.json();
-      console.log("✅ Login con Google exitoso:", data);
 
       if (data.success && data.user) {
         const userName =
@@ -160,7 +161,7 @@ export default function LoginForm({ onClose, goToRegister }) {
         }
 
         toast({
-          title: "✅ Inicio de sesión exitoso",
+          title: "Inicio de sesión exitoso",
           description: `Bienvenido ${userName}`,
           status: "success",
           duration: 2000,
@@ -171,9 +172,9 @@ export default function LoginForm({ onClose, goToRegister }) {
         }, 1000);
       }
     } catch (error) {
-      console.error("❌ Error con Google login:", error);
+      console.error("Error con Google login:", error);
       toast({
-        title: "❌ Error al iniciar sesión con Google",
+        title: "Error al iniciar sesión con Google",
         description: error.message,
         status: "error",
         duration: 4000,
@@ -185,7 +186,7 @@ export default function LoginForm({ onClose, goToRegister }) {
 
   const handleGoogleError = () => {
     toast({
-      title: "❌ Error de autenticación de Google",
+      title: "Error de autenticación de Google",
       description: "No se pudo completar el inicio de sesión",
       status: "error",
       duration: 4000,
@@ -193,15 +194,10 @@ export default function LoginForm({ onClose, goToRegister }) {
   };
 
   return (
-    <Box
-      minHeight="auto"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-    >
+    <Box minHeight="auto" display="flex" alignItems="center" justifyContent="center">
       <Box
         bg={colors.background.modal}
-        p={8} 
+        p={8}
         borderRadius="2xl"
         boxShadow={colors.shadows.glow}
         maxW="400px"
@@ -209,17 +205,16 @@ export default function LoginForm({ onClose, goToRegister }) {
         position="relative"
         color={colors.text.dark}
       >
-
-        <Heading textAlign="center" mb={6} fontSize="2xl" color={colors.text.primary} textshadow={colors.shadows.primary}>
+        <Heading textAlign="center" mb={6} fontSize="2xl" color={colors.text.primary}>
           Iniciar Sesión
         </Heading>
 
         {/* FORMULARIO */}
         <form onSubmit={handleSubmit}>
           <FormControl isInvalid={!!errorEmail} mb={4}>
-            <FormLabel  >Correo Electrónico</FormLabel>
+            <FormLabel>Correo Electrónico</FormLabel>
             <Input
-            color={colors.text.dark}
+              color={colors.text.dark}
               type="email"
               placeholder="correo@mail.com"
               value={email}
@@ -228,7 +223,7 @@ export default function LoginForm({ onClose, goToRegister }) {
               _placeholder={{ color: "gray.500" }}
               border={colors.borders.light}
               _focus={{
-                borderColor: colors.borders.primary ,
+                borderColor: colors.borders.primary,
                 boxShadow: colors.shadows.glow,
               }}
             />
@@ -236,18 +231,18 @@ export default function LoginForm({ onClose, goToRegister }) {
           </FormControl>
 
           <FormControl isInvalid={!!errorPassword} mb={4}>
-            <FormLabel  >Contraseña</FormLabel>
+            <FormLabel>Contraseña</FormLabel>
             <InputGroup>
               <Input
                 type={showPassword ? "text" : "password"}
                 placeholder="Tu contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                bg={colors.background.input} 
+                bg={colors.background.input}
                 _placeholder={{ color: "gray.500" }}
                 border={colors.borders.light}
                 _focus={{
-                  borderColor: colors.borders.primary ,
+                  borderColor: colors.borders.primary,
                   boxShadow: colors.shadows.glow,
                 }}
               />
@@ -262,14 +257,12 @@ export default function LoginForm({ onClose, goToRegister }) {
                 />
               </InputRightElement>
             </InputGroup>
-            {errorPassword && (
-              <FormErrorMessage>{errorPassword}</FormErrorMessage>
-            )}
+            {errorPassword && <FormErrorMessage>{errorPassword}</FormErrorMessage>}
           </FormControl>
 
           <Box textAlign="right" mb={4}>
             <Link href="/forgot-password" passHref>
-              <ChakraLink color={colors.text.primary}fontSize="sm">
+              <ChakraLink color={colors.text.primary} fontSize="sm">
                 ¿Olvidaste tu contraseña?
               </ChakraLink>
             </Link>
@@ -300,6 +293,7 @@ export default function LoginForm({ onClose, goToRegister }) {
           <Text textAlign="center" color={colors.text.muted} fontSize="sm" mb={3}>
             O continúa con
           </Text>
+
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={handleGoogleError}
@@ -309,9 +303,10 @@ export default function LoginForm({ onClose, goToRegister }) {
             text="continue_with"
             locale="es"
           />
+
           {isGoogleLoading && (
             <Box textAlign="center" mt={2}>
-              <Spinner size="sm" color="#5c212b" />
+              <Spinner size="sm" />
               <Text fontSize="xs" color="gray.500" mt={1}>
                 Verificando con Google...
               </Text>

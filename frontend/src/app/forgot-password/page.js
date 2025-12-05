@@ -15,6 +15,9 @@ import {
 } from "@chakra-ui/react";
 import Link from "next/link";
 
+// 🔥 FIX: usa variable de entorno, no localhost
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -36,7 +39,8 @@ export default function ForgotPassword() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/users/forgot-password", {
+      // 🔥 FIX: se reemplazó localhost por API_URL
+      const response = await fetch(`${API_URL}/api/users/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -48,14 +52,14 @@ export default function ForgotPassword() {
 
       setSent(true);
       toast({
-        title: "✅ Email enviado",
+        title: "Email enviado",
         description: "Revisa tu bandeja de entrada",
         status: "success",
       });
 
     } catch (error) {
       toast({
-        title: "❌ Error",
+        title: "Error",
         description: error.message,
         status: "error",
       });
@@ -70,7 +74,6 @@ export default function ForgotPassword() {
       display="flex"
       alignItems="center"
       justifyContent="center"
-      
       p={4}
     >
       <Box
@@ -104,9 +107,9 @@ export default function ForgotPassword() {
                   color="white"
                   border="2px solid #333333"
                   _focus={{
-                      borderColor: "#5c212b",
-                      oxShadow: "0 0 10px #5c212b",
-                   }}
+                    borderColor: "#5c212b",
+                    boxShadow: "0 0 10px #5c212b",
+                  }}
                 />
               </FormControl>
 
@@ -119,7 +122,7 @@ export default function ForgotPassword() {
                 _hover={{
                   bg: "#333333",
                   transform: "scale(1.02)",
-                }}    
+                }}
                 transition="all 0.2s"
                 mb={4}
                 loadingText="Enviando..."
@@ -137,7 +140,7 @@ export default function ForgotPassword() {
         ) : (
           <VStack spacing={4}>
             <Text color="green.400" textAlign="center">
-              ✅ Si tu email está registrado, recibirás las instrucciones en breve
+              Si tu email está registrado, recibirás las instrucciones en breve
             </Text>
             <Text color="gray.400" fontSize="sm" textAlign="center">
               Revisa tu bandeja de entrada y carpeta de spam

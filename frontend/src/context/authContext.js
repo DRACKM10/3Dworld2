@@ -9,13 +9,19 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const API_URL = 'http://localhost:8000/api';
+  // ✅ Usar variable de entorno para la URL de la API
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+  // Helper para centralizar fetch
+  const apiFetch = async (endpoint, options = {}) => {
+    return fetch(`${API_URL}${endpoint}`, options);
+  };
 
   const login = async (email, password) => {
     try {
       console.log('Attempting login with:', { email });
       
-      const res = await fetch(`${API_URL}/users/login`, {
+      const res = await apiFetch('/users/login', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -55,7 +61,7 @@ export const AuthProvider = ({ children }) => {
 
   const verifyToken = async (token) => {
     try {
-      const res = await fetch(`${API_URL}/users/verify`, {
+      const res = await apiFetch('/users/verify', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -65,7 +71,7 @@ export const AuthProvider = ({ children }) => {
       
       if (res.ok) {
         const userData = await res.json();
-        setUser(userData.user); // ← CORREGIDO: userData.user
+        setUser(userData.user); 
         setToken(token);
       } else {
         throw new Error('Invalid token');
@@ -81,7 +87,7 @@ export const AuthProvider = ({ children }) => {
   // Función para registro de usuarios
   const register = async (userData) => {
     try {
-      const res = await fetch(`${API_URL}/users/register`, {
+      const res = await apiFetch('/users/register', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

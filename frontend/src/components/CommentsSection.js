@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/authContext';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export default function CommentsSection({ productId, currentUser }) {
   const { user, token } = useAuth();
   const [comments, setComments] = useState([]);
@@ -13,7 +15,6 @@ export default function CommentsSection({ productId, currentUser }) {
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState("success");
 
-  // Obtener usuario del localStorage si no viene por props
   const [localUser, setLocalUser] = useState(null);
 
   useEffect(() => {
@@ -21,7 +22,6 @@ export default function CommentsSection({ productId, currentUser }) {
       setLocalUser(currentUser);
       console.log('👤 Usuario de props:', currentUser);
     } else {
-      // Intentar obtener del localStorage - primero intenta "user" completo
       let userData = localStorage.getItem("user");
       if (userData) {
         try {
@@ -33,12 +33,11 @@ export default function CommentsSection({ productId, currentUser }) {
           console.error("❌ Error parsing user data:", error);
         }
       }
-      
-      // Si no hay objeto completo, construir desde datos dispersos
+
       const userId = localStorage.getItem("userId");
       const userName = localStorage.getItem("usuario");
       const userEmail = localStorage.getItem("userEmail");
-      
+
       if (userId || userName) {
         const builtUser = {
           id: userId,
@@ -63,10 +62,12 @@ export default function CommentsSection({ productId, currentUser }) {
   useEffect(() => {
     const fetchComments = async () => {
       if (!productId) return;
+
       try {
-        const res = await fetch(`http://localhost:8000/api/comments/product/${productId}`);
+        const res = await fetch(`${API_URL}/api/comments/product/${productId}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
+
         setComments((data.comments || []).map(c => ({
           id: c.id,
           author: c.user_name || 'Usuario',
@@ -76,7 +77,9 @@ export default function CommentsSection({ productId, currentUser }) {
           verified: !!c.user_id,
           user_id: c.user_id
         })));
+
         if (data.stats) setStats(data.stats);
+
       } catch (err) {
         console.error('Error fetching comments:', err);
       }
@@ -86,7 +89,6 @@ export default function CommentsSection({ productId, currentUser }) {
   }, [productId]);
 
   const handleSubmit = () => {
-    // Verificar autenticación
     if (!localUser) {
       showNotification("Debes iniciar sesión para publicar un comentario", "warning");
       return;
@@ -102,7 +104,6 @@ export default function CommentsSection({ productId, currentUser }) {
       return;
     }
 
-    // Publicar comentario
     const publish = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -111,7 +112,7 @@ export default function CommentsSection({ productId, currentUser }) {
           return;
         }
 
-        const res = await fetch(`http://localhost:8000/api/comments/product/${productId}`, {
+        const res = await fetch(`${API_URL}/api/comments/product/${productId}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -142,6 +143,7 @@ export default function CommentsSection({ productId, currentUser }) {
         };
 
         setComments(prev => [mapped, ...prev]);
+
         setStats(prev => ({
           totalComments: prev.totalComments + 1,
           averageRating: Math.round(((prev.averageRating * prev.totalComments) + (mapped.rating || 0)) / (prev.totalComments + 1) * 10) / 10
@@ -150,6 +152,7 @@ export default function CommentsSection({ productId, currentUser }) {
         setNewComment("");
         setNewRating(0);
         showNotification("¡Comentario publicado! Gracias por tu opinión", "success");
+
       } catch (err) {
         console.error('Error publishing comment:', err);
         showNotification('Error al publicar comentario', 'warning');
@@ -159,9 +162,59 @@ export default function CommentsSection({ productId, currentUser }) {
     publish();
   };
 
-  const averageRating = stats && stats.averageRating ? stats.averageRating : (comments.length > 0
-    ? (comments.reduce((sum, c) => sum + c.rating, 0) / comments.length).toFixed(1)
-    : 0);
+  const handleDeleteComment = async (commentId, commentUserId) => {
+    if (!localUser?.id || localUser.id.toString() !== commentUserId?.toString()) {
+      showNotification("No tienes permisos para eliminar este comentario", "warning");
+      return;
+    }
+
+    if (!window.confirm("¿Estás seguro de que deseas eliminar este comentario?")) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        showNotification('Error de autenticación. Vuelve a iniciar sesión.', 'warning');
+        return;
+      }
+
+      const res = await fetch(`${API_URL}/api/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        const msg = data?.error || data?.message || 'Error al eliminar comentario';
+        showNotification(msg, 'warning');
+        return;
+      }
+
+      setComments(prev => prev.filter(c => c.id !== commentId));
+
+      setStats(prev => ({
+        totalComments: prev.totalComments - 1,
+        averageRating: prev.totalComments > 1 
+          ? Math.round(prev.averageRating * (prev.totalComments / (prev.totalComments - 1)) * 10) / 10
+          : 0
+      }));
+
+      showNotification("Comentario eliminado correctamente", "success");
+
+    } catch (err) {
+      console.error('Error deleting comment:', err);
+      showNotification('Error al eliminar comentario', 'warning');
+    }
+  };
+
+  const averageRating = stats && stats.averageRating ? stats.averageRating : (
+    comments.length > 0
+      ? (comments.reduce((sum, c) => sum + c.rating, 0) / comments.length).toFixed(1)
+      : 0
+  );
 
   const StarRating = ({ rating, interactive = false, onRate }) => {
     return (
@@ -199,62 +252,6 @@ export default function CommentsSection({ productId, currentUser }) {
       month: 'long',
       day: 'numeric'
     });
-  };
-
-  const handleDeleteComment = async (commentId, commentUserId) => {
-    // Verificar que el usuario actual sea el propietario del comentario
-    console.log('🔍 Intentando eliminar comentario:', { 
-      userId: localUser?.id, 
-      commentUserId, 
-      localUser 
-    });
-    
-    if (!localUser?.id || localUser.id.toString() !== commentUserId?.toString()) {
-      showNotification("No tienes permisos para eliminar este comentario", "warning");
-      return;
-    }
-
-    if (!window.confirm("¿Estás seguro de que deseas eliminar este comentario?")) {
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        showNotification('Error de autenticación. Vuelve a iniciar sesión.', 'warning');
-        return;
-      }
-
-      const res = await fetch(`http://localhost:8000/api/comments/${commentId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        const msg = data?.error || data?.message || 'Error al eliminar comentario';
-        showNotification(msg, 'warning');
-        return;
-      }
-
-      // Remover el comentario de la lista
-      setComments(prev => prev.filter(c => c.id !== commentId));
-      
-      // Actualizar estadísticas
-      setStats(prev => ({
-        totalComments: prev.totalComments - 1,
-        averageRating: prev.totalComments > 1 
-          ? Math.round(prev.averageRating * (prev.totalComments / (prev.totalComments - 1)) * 10) / 10
-          : 0
-      }));
-
-      showNotification("Comentario eliminado correctamente", "success");
-    } catch (err) {
-      console.error('Error deleting comment:', err);
-      showNotification('Error al eliminar comentario', 'warning');
-    }
   };
 
   return (
