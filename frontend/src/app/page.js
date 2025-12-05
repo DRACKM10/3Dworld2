@@ -23,6 +23,9 @@ import { useRouter } from "next/navigation";
 import { useCart } from "../context/CartContext";
 import ProductFormModal from "../components/ProductFormModal";
 
+// ✅ URL del backend (usa variable de entorno en producción)
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export default function HomePage() {
   const router = useRouter();
   const toast = useToast();
@@ -70,7 +73,7 @@ export default function HomePage() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const response = await fetch("http://localhost:8000/api/products");
+        const response = await fetch(`${API_URL}/api/products`);
         if (!response.ok) throw new Error("Error al cargar productos");
         const data = await response.json();
 
@@ -152,7 +155,7 @@ export default function HomePage() {
     if (!confirm("¿Estás seguro de eliminar este producto?")) return;
 
     try {
-      const response = await fetch(`http://localhost:8000/api/products/${id}`, {
+      const response = await fetch(`${API_URL}/api/products/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -207,7 +210,7 @@ export default function HomePage() {
       >
         <VStack>
           <Spinner size="xl" color="#5c212b" thickness="4px" />
-          <Text color="white" mt={4} fontSize="lg">
+          <Text color="black" mt={4} fontSize="lg">
             Cargando productos...
           </Text>
         </VStack>
