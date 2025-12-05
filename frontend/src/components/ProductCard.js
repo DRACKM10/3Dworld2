@@ -5,7 +5,7 @@ import { useCart } from '../context/CartContext';
 import { Box, Image, Button, Text, VStack, HStack, IconButton, useToast } from '@chakra-ui/react';
 import { EditIcon, DeleteIcon } from '@chakra-ui/icons';
 import { useRouter } from 'next/navigation';
-import StlViewer from "react-stl-viewer";
+import { StlViewer } from "react-stl-viewer";
 
 export default function ProductCard({ product, onEdit, onDelete }) {
   const { addToCart } = useCart();

@@ -18,7 +18,7 @@ import {
 import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
 import { useParams, useRouter } from "next/navigation";
 import { useCart } from "../../../context/CartContext";
-import STLViewer from "../../../components/STLViewer";
+import { STLViewer } from "../../../components/STLViewer";
 import CommentsSection from "../../../components/CommentsSection";
 
 export default function ProductPage() {
