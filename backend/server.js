@@ -15,10 +15,17 @@ dotenv.config();
 
 const app = express();
 
+// ✅ CORS configurado para localhost Y Vercel
 app.use(cors({ 
-  origin: "http://localhost:3000",
+  origin: [
+    "http://localhost:3000",
+    "https://3-dworld2.vercel.app",
+    "https://3-dworld2-git-master-drackm10os-projects.vercel.app",
+    "https://3-dworld2-3kwro0m5x-drackm10os-projects.vercel.app"
+  ],
   credentials: true 
 }));
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -131,10 +138,10 @@ const startServer = async () => {
   }
   
   app.listen(PORT, () => {
-    console.log(`🌐 Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`🌐 Servidor corriendo en puerto ${PORT}`);
     console.log(`📊 Entorno: ${process.env.NODE_ENV || 'development'}`);
     console.log(`🗄️  Base de datos: ${dbConnected ? '✅ Conectado' : '❌ Desconectado'}`);
-    console.log(`🔗 CORS habilitado para: http://localhost:3000`);
+    console.log(`🔗 CORS habilitado para: localhost:3000 y Vercel`);
   });
 };
 
