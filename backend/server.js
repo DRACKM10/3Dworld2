@@ -15,14 +15,9 @@ dotenv.config();
 
 const app = express();
 
-// ✅ CORS configurado para localhost Y Vercel
+// ✅ CORS permisivo - acepta cualquier origen (incluye todos los subdominios de Vercel)
 app.use(cors({ 
-  origin: [
-    "http://localhost:3000",
-    "https://3-dworld2.vercel.app",
-    "https://3-dworld2-git-master-drackm10os-projects.vercel.app",
-    "https://3-dworld2-3kwro0m5x-drackm10os-projects.vercel.app"
-  ],
+  origin: true,
   credentials: true 
 }));
 
@@ -141,7 +136,7 @@ const startServer = async () => {
     console.log(`🌐 Servidor corriendo en puerto ${PORT}`);
     console.log(`📊 Entorno: ${process.env.NODE_ENV || 'development'}`);
     console.log(`🗄️  Base de datos: ${dbConnected ? '✅ Conectado' : '❌ Desconectado'}`);
-    console.log(`🔗 CORS habilitado para: localhost:3000 y Vercel`);
+    console.log(`🔗 CORS habilitado para todos los orígenes`);
   });
 };
 
