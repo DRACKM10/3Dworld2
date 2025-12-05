@@ -106,7 +106,7 @@ const STLViewer = ({ url }) => {
                 </HStack>
 
                 <Text color="gray.300" fontSize="md" maxW="500px">
-                  Haz clic en la pestaña "Vista 3D Interactiva" para explorar el modelo 
+                  Haz clic en la pestaña 'Vista 3D Interactiva' para explorar el modelo 
                   en tu navegador, o descárgalo para verlo en tu software favorito.
                 </Text>
 
